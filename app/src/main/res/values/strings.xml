@@ -1,3 +1,7 @@
 <resources>
     <string name="app_name">UpnpController</string>
+    <string name="navigation_drawer_open">Show servers</string>
+    <string name="navigation_drawer_close">Hide servers</string>
+    <string name="action_settings">Settings</string>
+    <string name="media_servers">media_servers</string>
 </resources>

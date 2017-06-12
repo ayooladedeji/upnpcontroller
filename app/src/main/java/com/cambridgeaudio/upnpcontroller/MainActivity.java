@@ -1,5 +1,7 @@
 package com.cambridgeaudio.upnpcontroller;
 
+import android.content.Context;
+import android.content.Intent;
 import android.support.annotation.NonNull;
 import android.support.design.widget.NavigationView;
 import android.support.v4.view.GravityCompat;
@@ -10,6 +12,11 @@ import android.os.Bundle;
 import android.support.v7.widget.Toolbar;
 import android.view.Menu;
 import android.view.MenuItem;
+
+import com.cambridgeaudio.upnpcontroller.upnp.UpnpApiImpl;
+
+import org.fourthline.cling.android.AndroidUpnpServiceImpl;
+import org.fourthline.cling.model.meta.Device;
 
 import butterknife.BindView;
 import butterknife.ButterKnife;
@@ -22,19 +29,28 @@ public class MainActivity extends AppCompatActivity
     @BindView(R.id.nav_view)
     NavigationView navigationView;
 
+    MainViewModel viewModel;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         ButterKnife.bind(this);
-        setSupportActionBar(toolbar);
 
+        viewModel = new MainViewModel(this, new UpnpApiImpl());
+        getApplicationContext().bindService(
+                new Intent(this, AndroidUpnpServiceImpl.class),
+                viewModel.getServiceConnection(),
+                Context.BIND_AUTO_CREATE
+        );
+
+        setSupportActionBar(toolbar);
         setUpDrawerLayout();
 
 
     }
 
-    private void setUpDrawerLayout(){
+    private void setUpDrawerLayout() {
         DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
         ActionBarDrawerToggle toggle = new ActionBarDrawerToggle(
                 this, drawer, toolbar, R.string.navigation_drawer_open, R.string.navigation_drawer_close);
@@ -44,11 +60,14 @@ public class MainActivity extends AppCompatActivity
         navigationView.setNavigationItemSelectedListener(this);
     }
 
-    private void getMediaServers(){
+    private void getMediaServers() {
         Menu menu = navigationView.getMenu();
-        for (int i = 1; i <= 3; i++) {
-            menu.add("Media Server " + i);
-        }
+        viewModel.getMediaServers().subscribe(list -> {
+            menu.clear();
+            for (Device mediaServer : list) {
+                menu.add(mediaServer.getDetails().getFriendlyName());
+            }
+        });
     }
 
     @Override
@@ -85,14 +104,8 @@ public class MainActivity extends AppCompatActivity
 
     @Override
     public boolean onNavigationItemSelected(@NonNull MenuItem item) {
-// Handle navigation view item clicks here.
-        int id = item.getItemId();
-
-        switch (id) {
-            default:
-                break;
-        }
-
+        // Handle navigation view item clicks here.
+        viewModel.setSelectedDevice(item.getTitle().toString());
         DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
         drawer.closeDrawer(GravityCompat.START);
         return true;

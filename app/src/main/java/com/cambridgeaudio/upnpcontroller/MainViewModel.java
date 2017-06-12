@@ -3,6 +3,7 @@ package com.cambridgeaudio.upnpcontroller;
 import android.content.Context;
 import android.content.ServiceConnection;
 import android.databinding.BaseObservable;
+import android.databinding.ObservableArrayList;
 
 import com.cambridgeaudio.upnpcontroller.upnp.UpnpApi;
 
@@ -22,10 +23,12 @@ public class MainViewModel extends BaseObservable {
 
     private Context context;
     private UpnpApi upnpApi;
+    public ObservableArrayList<DidlViewModel> items;
 
     public MainViewModel(Context context, UpnpApi upnpApi){
         this.context = context;
         this.upnpApi = upnpApi;
+        this.items = new ObservableArrayList<>();
     }
 
 

@@ -7,17 +7,25 @@ import android.util.Log;
 
 import org.fourthline.cling.android.AndroidUpnpService;
 import org.fourthline.cling.controlpoint.ControlPoint;
+import org.fourthline.cling.model.action.ActionInvocation;
+import org.fourthline.cling.model.message.UpnpResponse;
 import org.fourthline.cling.model.meta.Device;
 import org.fourthline.cling.model.meta.LocalDevice;
 import org.fourthline.cling.model.meta.RemoteDevice;
+import org.fourthline.cling.model.types.UDAServiceType;
 import org.fourthline.cling.registry.DefaultRegistryListener;
 import org.fourthline.cling.registry.Registry;
+import org.fourthline.cling.support.contentdirectory.callback.Browse;
+import org.fourthline.cling.support.model.BrowseFlag;
+import org.fourthline.cling.support.model.DIDLContent;
 import org.fourthline.cling.support.model.DIDLObject;
+import org.fourthline.cling.support.model.SortCriterion;
 
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.Objects;
 
+import io.reactivex.BackpressureStrategy;
 import io.reactivex.Flowable;
 import io.reactivex.Observable;
 import io.reactivex.android.schedulers.AndroidSchedulers;
@@ -40,7 +48,6 @@ public class UpnpApiImpl implements UpnpApi {
     private ArrayList<Device> mediaServers = new ArrayList<>();
 
     //rx objects
-    private CompositeDisposable disposables = new CompositeDisposable();
     private BehaviorSubject<ArrayList<Device>> mediaServersSubject = BehaviorSubject.create();
 
     private ServiceConnection serviceConnection  = null;
@@ -77,7 +84,17 @@ public class UpnpApiImpl implements UpnpApi {
 
     @Override
     public Flowable<DIDLObject> browse(String id) {
-        return null;
+        return Flowable.create(e -> new Browse(selectedDevice.findService(new UDAServiceType("ContentDirectory")), id, BrowseFlag.DIRECT_CHILDREN, "*", 0, null, new SortCriterion(true, "dc:title")) {
+            @Override
+            public void received(ActionInvocation actionInvocation, DIDLContent didl) {
+                didl.getContainers().forEach(e::onNext);
+                didl.getItems().forEach(e::onNext);
+            }
+            @Override
+            public void updateStatus(Status status) {}
+            @Override
+            public void failure(ActionInvocation invocation, UpnpResponse operation, String defaultMsg) {}
+        }, BackpressureStrategy.BUFFER);
     }
 
     @Override
@@ -114,8 +131,6 @@ public class UpnpApiImpl implements UpnpApi {
     @Override
     public void destroy() {
         upnpService.getRegistry().removeListener(registryListener);
-        disposables.clear();
-
     }
 
     private class BrowseRegistryListener extends DefaultRegistryListener {

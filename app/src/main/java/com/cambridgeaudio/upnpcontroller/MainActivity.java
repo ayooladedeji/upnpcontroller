@@ -12,6 +12,7 @@ import android.support.v7.app.ActionBarDrawerToggle;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.support.v7.widget.LinearLayoutManager;
+import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -22,16 +23,23 @@ import com.cambridgeaudio.upnpcontroller.upnp.UpnpApiImpl;
 import org.fourthline.cling.android.AndroidUpnpServiceImpl;
 import org.fourthline.cling.model.meta.Device;
 
+import java.util.ArrayList;
+
 import butterknife.BindView;
 import butterknife.ButterKnife;
 
 public class MainActivity extends AppCompatActivity
         implements NavigationView.OnNavigationItemSelectedListener {
 
-    @BindView(R.id.toolbar)
-    Toolbar toolbar;
-    @BindView(R.id.nav_view)
-    NavigationView navigationView;
+//    @BindView(R.id.toolbar)
+//    Toolbar toolbar;
+//    @BindView(R.id.nav_view)
+//    NavigationView navigationView;
+//    @BindView(R.id.drawer_layout)
+//    DrawerLayout drawer;
+
+
+
 
     private MainViewModel viewModel;
     private ActivityMainBinding binding;
@@ -47,31 +55,30 @@ public class MainActivity extends AppCompatActivity
         binding.setMainViewModel(viewModel);
         binding.setView(this);
         binding.didlList.setLayoutManager(new LinearLayoutManager(this));
-
+        binding.didlList.setAdapter(new DidlRecyclerViewAdapter(this, new ArrayList<>()));
         getApplicationContext().bindService(
                 new Intent(this, AndroidUpnpServiceImpl.class),
                 viewModel.getServiceConnection(),
                 Context.BIND_AUTO_CREATE
         );
 
-        setSupportActionBar(toolbar);
+        setSupportActionBar(binding.includedAppBar.test);
         setUpDrawerLayout();
 
 
     }
 
     private void setUpDrawerLayout() {
-        DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
         ActionBarDrawerToggle toggle = new ActionBarDrawerToggle(
-                this, drawer, toolbar, R.string.navigation_drawer_open, R.string.navigation_drawer_close);
-        drawer.addDrawerListener(toggle);
+                this, binding.drawerLayout, toolbar, R.string.navigation_drawer_open, R.string.navigation_drawer_close);
+        binding.drawerLayout.addDrawerListener(toggle);
         toggle.syncState();
         getMediaServers();
-        navigationView.setNavigationItemSelectedListener(this);
+        binding.navView.setNavigationItemSelectedListener(this);
     }
 
     private void getMediaServers() {
-        Menu menu = navigationView.getMenu();
+        Menu menu = binding.navView.getMenu();
         viewModel.getMediaServers().subscribe(list -> {
             menu.clear();
             for (Device mediaServer : list) {
@@ -82,9 +89,8 @@ public class MainActivity extends AppCompatActivity
 
     @Override
     public void onBackPressed() {
-        DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
-        if (drawer.isDrawerOpen(GravityCompat.START)) {
-            drawer.closeDrawer(GravityCompat.START);
+        if (binding.drawerLayout.isDrawerOpen(GravityCompat.START)) {
+            binding.drawerLayout.closeDrawer(GravityCompat.START);
         } else {
             super.onBackPressed();
         }
@@ -116,8 +122,8 @@ public class MainActivity extends AppCompatActivity
     public boolean onNavigationItemSelected(@NonNull MenuItem item) {
         // Handle navigation view item clicks here.
         viewModel.setSelectedDevice(item.getTitle().toString());
-        DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
-        drawer.closeDrawer(GravityCompat.START);
+        viewModel.browse("0");
+        binding.drawerLayout.closeDrawer(GravityCompat.START);
         return true;
     }
 }

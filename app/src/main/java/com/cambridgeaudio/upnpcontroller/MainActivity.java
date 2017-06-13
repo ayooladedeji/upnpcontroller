@@ -2,6 +2,7 @@ package com.cambridgeaudio.upnpcontroller;
 
 import android.content.Context;
 import android.content.Intent;
+import android.databinding.DataBindingUtil;
 import android.support.annotation.NonNull;
 import android.support.design.widget.NavigationView;
 import android.support.v4.view.GravityCompat;
@@ -9,59 +10,51 @@ import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.ActionBarDrawerToggle;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
-import android.support.v7.widget.Toolbar;
 import android.view.Menu;
 import android.view.MenuItem;
 
+import com.cambridgeaudio.upnpcontroller.databinding.ActivityMainBinding;
 import com.cambridgeaudio.upnpcontroller.upnp.UpnpApiImpl;
 
 import org.fourthline.cling.android.AndroidUpnpServiceImpl;
 import org.fourthline.cling.model.meta.Device;
 
-import butterknife.BindView;
-import butterknife.ButterKnife;
-
 public class MainActivity extends AppCompatActivity
         implements NavigationView.OnNavigationItemSelectedListener {
 
-    @BindView(R.id.toolbar)
-    Toolbar toolbar;
-    @BindView(R.id.nav_view)
-    NavigationView navigationView;
-
-    MainViewModel viewModel;
+    private MainViewModel viewModel;
+    private ActivityMainBinding binding;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_main);
-        ButterKnife.bind(this);
 
         viewModel = new MainViewModel(this, new UpnpApiImpl());
+        binding = DataBindingUtil.setContentView(this, R.layout.activity_main);
+        binding.setMainViewModel(viewModel);
+        binding.setView(this);
         getApplicationContext().bindService(
                 new Intent(this, AndroidUpnpServiceImpl.class),
                 viewModel.getServiceConnection(),
                 Context.BIND_AUTO_CREATE
         );
-
-        setSupportActionBar(toolbar);
+        setSupportActionBar(binding.includedAppBar.toolbar);
         setUpDrawerLayout();
 
 
     }
 
     private void setUpDrawerLayout() {
-        DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
         ActionBarDrawerToggle toggle = new ActionBarDrawerToggle(
-                this, drawer, toolbar, R.string.navigation_drawer_open, R.string.navigation_drawer_close);
-        drawer.addDrawerListener(toggle);
+                this, binding.drawerLayout, binding.includedAppBar.toolbar, R.string.navigation_drawer_open, R.string.navigation_drawer_close);
+        binding.drawerLayout.addDrawerListener(toggle);
         toggle.syncState();
         getMediaServers();
-        navigationView.setNavigationItemSelectedListener(this);
+        binding.navView.setNavigationItemSelectedListener(this);
     }
 
     private void getMediaServers() {
-        Menu menu = navigationView.getMenu();
+        Menu menu = binding.navView.getMenu();
         viewModel.getMediaServers().subscribe(list -> {
             menu.clear();
             for (Device mediaServer : list) {

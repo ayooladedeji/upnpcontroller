@@ -9,7 +9,6 @@ import com.cambridgeaudio.upnpcontroller.upnp.UpnpApi;
 import org.fourthline.cling.model.meta.Device;
 
 import java.util.ArrayList;
-import java.util.List;
 
 import io.reactivex.Observable;
 import io.reactivex.android.schedulers.AndroidSchedulers;
@@ -39,6 +38,6 @@ public class MainViewModel extends BaseObservable {
 
 
     public void setSelectedDevice(String name){
-        getMediaServers().subscribe(devices -> devices.stream().filter(d -> name.equals(d.getDetails().getFriendlyName())).forEach(d -> upnpApi.setSelectedDevice(d)));
+        getMediaServers().subscribe(devices -> devices.stream().filter(d -> name.equals(d.getDetails().getFriendlyName())).forEach(d -> upnpApi.selectMediaServer(d)));
     }
 }

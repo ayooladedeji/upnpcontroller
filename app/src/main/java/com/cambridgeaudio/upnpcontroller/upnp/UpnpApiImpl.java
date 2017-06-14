@@ -54,11 +54,11 @@ public class UpnpApiImpl implements UpnpApi {
     //rx objects
     private BehaviorSubject<ArrayList<Device>> mediaServersSubject = BehaviorSubject.create();
 
-    private ServiceConnection serviceConnection  = null;
+    private ServiceConnection serviceConnection = null;
 
     @Override
     public ServiceConnection getServiceConnection() {
-        if(serviceConnection == null){
+        if (serviceConnection == null) {
             serviceConnection = new ServiceConnection() {
 
                 public void onServiceConnected(ComponentName className, IBinder service) {
@@ -88,23 +88,28 @@ public class UpnpApiImpl implements UpnpApi {
 
     @Override
     public Flowable<DIDLObject> browse(String id) {
-        return Flowable.create(e -> new Browse(selectedDevice.findService(new UDAServiceType("ContentDirectory")), id, BrowseFlag.DIRECT_CHILDREN, "*", 0, null, new SortCriterion(true, "dc:title")) {
+        return Flowable.create(e -> controlPoint.execute(new Browse(selectedDevice.findService(new UDAServiceType("ContentDirectory")), id, BrowseFlag.DIRECT_CHILDREN, "*", 0, null, new SortCriterion(true, "dc:title")) {
             @Override
             public void received(ActionInvocation actionInvocation, DIDLContent didl) {
                 didl.getContainers().forEach(e::onNext);
                 didl.getItems().forEach(e::onNext);
             }
+
             @Override
-            public void updateStatus(Status status) {}
+            public void updateStatus(Status status) {
+            }
+
             @Override
-            public void failure(ActionInvocation invocation, UpnpResponse operation, String defaultMsg) {}
-        }, BackpressureStrategy.BUFFER);    }
+            public void failure(ActionInvocation invocation, UpnpResponse operation, String defaultMsg) {
+            }
+        }), BackpressureStrategy.BUFFER);
+    }
 
     @Override
     public Flowable<DIDLObject> recursiveScan(String id) {
         return browse(id)
                 .flatMap(didlObject -> {
-                    if (didlObject instanceof Container){
+                    if (didlObject instanceof Container) {
                         return recursiveScan(didlObject.getId());
                     } else {
                         return Flowable.just(didlObject);

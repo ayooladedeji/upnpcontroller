@@ -10,6 +10,7 @@ import java.util.List;
 
 import io.reactivex.Flowable;
 import io.reactivex.Observable;
+import io.reactivex.disposables.Disposable;
 
 /**
  * Created by Ayo on 12/06/2017.
@@ -23,15 +24,13 @@ public interface UpnpApi {
 
     Flowable<DIDLObject> recursiveScan(String id);
 
-    void scan(String id);
+    Disposable scan(String id);
 
     Observable<ArrayList<Device>> getMediaServers();
 
-    void selectMediaServer();
+    Device getSelectedMediaServer();
 
-    Device getSelectedDevice();
-
-    void setSelectedDevice(Device device);
+    void selectMediaServer(Device device);
 
     void destroy();
 

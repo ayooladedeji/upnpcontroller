@@ -71,9 +71,6 @@ dependencies {
     compile group: 'org.eclipse.jetty', name: 'jetty-client', version:'8.1.18.v20150929'
     compile group: 'org.slf4j', name: 'slf4j-jdk14', version:'1.7.14'
 
-    //butterknife
-    compile 'com.jakewharton:butterknife:8.6.0'
-    annotationProcessor 'com.jakewharton:butterknife-compiler:8.6.0'
 
     //  Rx dependencies
     compile 'io.reactivex.rxjava2:rxjava:2.0.7'

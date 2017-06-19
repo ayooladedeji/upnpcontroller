@@ -3,13 +3,14 @@ package com.cambridgeaudio.upnpcontroller;
 import android.content.Context;
 import android.content.ServiceConnection;
 import android.databinding.BaseObservable;
+import android.databinding.Bindable;
+import android.databinding.ObservableArrayList;
 
 import com.cambridgeaudio.upnpcontroller.upnp.UpnpApi;
 
 import org.fourthline.cling.model.meta.Device;
 
 import java.util.ArrayList;
-import java.util.List;
 
 import io.reactivex.Observable;
 import io.reactivex.android.schedulers.AndroidSchedulers;
@@ -20,12 +21,14 @@ import io.reactivex.android.schedulers.AndroidSchedulers;
 
 public class MainViewModel extends BaseObservable {
 
-    private Context context;
     private UpnpApi upnpApi;
 
-    public MainViewModel(Context context, UpnpApi upnpApi){
-        this.context = context;
+    @Bindable
+    public ObservableArrayList<DidlViewModel> didlList;
+
+    public MainViewModel(UpnpApi upnpApi){
         this.upnpApi = upnpApi;
+        this.didlList = new ObservableArrayList<>();
     }
 
 
@@ -38,7 +41,15 @@ public class MainViewModel extends BaseObservable {
     }
 
 
-    public void setSelectedDevice(String name){
-        getMediaServers().subscribe(devices -> devices.stream().filter(d -> name.equals(d.getDetails().getFriendlyName())).forEach(d -> upnpApi.setSelectedDevice(d)));
+    public void selectMediaServer(String name){
+        getMediaServers().subscribe(devices -> {
+            devices.stream().filter(d -> name.equals(d.getDetails().getFriendlyName())).forEach(d -> upnpApi.selectMediaServer(d));
+            browse("0");
+        });
+    }
+
+    public void browse(String id) {
+        this.didlList.clear();
+        upnpApi.browse(id).subscribe(didlObject -> didlList.add(new DidlViewModel(didlObject)));
     }
 }

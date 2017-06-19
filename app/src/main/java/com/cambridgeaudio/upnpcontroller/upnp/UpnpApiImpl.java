@@ -7,21 +7,32 @@ import android.util.Log;
 
 import org.fourthline.cling.android.AndroidUpnpService;
 import org.fourthline.cling.controlpoint.ControlPoint;
+import org.fourthline.cling.model.action.ActionInvocation;
+import org.fourthline.cling.model.message.UpnpResponse;
 import org.fourthline.cling.model.meta.Device;
 import org.fourthline.cling.model.meta.LocalDevice;
 import org.fourthline.cling.model.meta.RemoteDevice;
+import org.fourthline.cling.model.types.UDAServiceType;
 import org.fourthline.cling.registry.DefaultRegistryListener;
 import org.fourthline.cling.registry.Registry;
+import org.fourthline.cling.support.contentdirectory.callback.Browse;
+import org.fourthline.cling.support.model.BrowseFlag;
+import org.fourthline.cling.support.model.DIDLContent;
 import org.fourthline.cling.support.model.DIDLObject;
+import org.fourthline.cling.support.model.SortCriterion;
+import org.fourthline.cling.support.model.container.Container;
+import org.fourthline.cling.support.model.item.AudioItem;
 
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.Objects;
 
+import io.reactivex.BackpressureStrategy;
 import io.reactivex.Flowable;
 import io.reactivex.Observable;
 import io.reactivex.android.schedulers.AndroidSchedulers;
-import io.reactivex.disposables.CompositeDisposable;
+import io.reactivex.disposables.Disposable;
+import io.reactivex.schedulers.Schedulers;
 import io.reactivex.subjects.BehaviorSubject;
 
 /**
@@ -36,11 +47,10 @@ public class UpnpApiImpl implements UpnpApi {
     private BrowseRegistryListener registryListener = new BrowseRegistryListener();
     private AndroidUpnpService upnpService;
     private ControlPoint controlPoint;
-    private Device selectedDevice = null;
+    private Device selectedMediaServer = null;
     private ArrayList<Device> mediaServers = new ArrayList<>();
 
     //rx objects
-    private CompositeDisposable disposables = new CompositeDisposable();
     private BehaviorSubject<ArrayList<Device>> mediaServersSubject = BehaviorSubject.create();
 
     private ServiceConnection serviceConnection  = null;
@@ -77,17 +87,46 @@ public class UpnpApiImpl implements UpnpApi {
 
     @Override
     public Flowable<DIDLObject> browse(String id) {
-        return null;
+        return Flowable.create(e -> controlPoint.execute(new Browse(selectedMediaServer.findService(new UDAServiceType("ContentDirectory")), id, BrowseFlag.DIRECT_CHILDREN, "*", 0, null, new SortCriterion(true, "dc:title")) {
+            @Override
+            public void received(ActionInvocation actionInvocation, DIDLContent didl) {
+                didl.getContainers().forEach(e::onNext);
+                didl.getItems().forEach(e::onNext);
+            }
+
+            @Override
+            public void updateStatus(Status status) {
+            }
+
+            @Override
+            public void failure(ActionInvocation invocation, UpnpResponse operation, String defaultMsg) {
+            }
+        }), BackpressureStrategy.BUFFER);
     }
 
     @Override
     public Flowable<DIDLObject> recursiveScan(String id) {
-        return null;
+        return browse(id)
+                .flatMap(didlObject -> {
+                    if (didlObject instanceof Container) {
+                        return recursiveScan(didlObject.getId());
+                    } else {
+                        return Flowable.just(didlObject);
+                    }
+                });
     }
 
     @Override
-    public void scan(String id) {
-
+    public Disposable scan(String id) {
+        return recursiveScan(id)
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribeOn(Schedulers.io())
+                .subscribe(didlObject -> {
+                    if (didlObject instanceof AudioItem) {
+                        Log.d(TAG, didlObject.getTitle());
+                    }
+                });
+        //todo instead of logging we need to add to the db, this method should also probably take a db instance?
     }
 
     @Override
@@ -95,26 +134,20 @@ public class UpnpApiImpl implements UpnpApi {
         return mediaServersSubject.observeOn(AndroidSchedulers.mainThread());
     }
 
-    @Override
-    public void selectMediaServer() {
 
+    public Device getSelectedMediaServer() {
+        return selectedMediaServer;
     }
 
     @Override
-    public Device getSelectedDevice() {
-        return null;
-    }
-
-    @Override
-    public void setSelectedDevice(Device device) {
+    public void selectMediaServer(Device device) {
         Log.d(TAG, "device selected: "+ device.getDetails().getFriendlyName());
-        selectedDevice = device;
+        selectedMediaServer = device;
     }
 
     @Override
     public void destroy() {
         upnpService.getRegistry().removeListener(registryListener);
-        disposables.clear();
 
     }
 

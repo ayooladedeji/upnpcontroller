@@ -2,6 +2,7 @@ package com.cambridgeaudio.upnpcontroller;
 
 import android.content.Context;
 import android.content.Intent;
+import android.databinding.DataBindingUtil;
 import android.support.annotation.NonNull;
 import android.support.design.widget.NavigationView;
 import android.support.v4.view.GravityCompat;
@@ -9,65 +10,89 @@ import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.ActionBarDrawerToggle;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
-import android.support.v7.widget.Toolbar;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 
+import com.cambridgeaudio.upnpcontroller.databinding.ActivityMainBinding;
 import com.cambridgeaudio.upnpcontroller.upnp.UpnpApiImpl;
 
 import org.fourthline.cling.android.AndroidUpnpServiceImpl;
 import org.fourthline.cling.model.meta.Device;
 
-import butterknife.BindView;
-import butterknife.ButterKnife;
+import java.util.ArrayList;
+
 
 public class MainActivity extends AppCompatActivity
         implements NavigationView.OnNavigationItemSelectedListener {
 
-    @BindView(R.id.toolbar)
-    Toolbar toolbar;
-    @BindView(R.id.nav_view)
-    NavigationView navigationView;
-
-    MainViewModel viewModel;
+    private final String TAG = "MainActivity";
+    private MainViewModel mainViewModel;
+    private ActivityMainBinding binding;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_main);
-        ButterKnife.bind(this);
+        mainViewModel = new MainViewModel(new UpnpApiImpl());
 
-        viewModel = new MainViewModel(this, new UpnpApiImpl());
+        binding = DataBindingUtil.setContentView(this, R.layout.activity_main);
+        binding.setMainViewModel(mainViewModel);
+        binding.setView(this);
+
         getApplicationContext().bindService(
                 new Intent(this, AndroidUpnpServiceImpl.class),
-                viewModel.getServiceConnection(),
+                mainViewModel.getServiceConnection(),
                 Context.BIND_AUTO_CREATE
         );
 
-        setSupportActionBar(toolbar);
+        setSupportActionBar(binding.toolbar);
         setUpDrawerLayout();
 
 
     }
 
     private void setUpDrawerLayout() {
-        DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
         ActionBarDrawerToggle toggle = new ActionBarDrawerToggle(
-                this, drawer, toolbar, R.string.navigation_drawer_open, R.string.navigation_drawer_close);
-        drawer.addDrawerListener(toggle);
+                this, binding.drawerLayout, binding.toolbar, R.string.navigation_drawer_open, R.string.navigation_drawer_close);
+        binding.drawerLayout.addDrawerListener(toggle);
         toggle.syncState();
         getMediaServers();
-        navigationView.setNavigationItemSelectedListener(this);
+        binding.navView.setNavigationItemSelectedListener(this);
     }
 
     private void getMediaServers() {
-        Menu menu = navigationView.getMenu();
-        viewModel.getMediaServers().subscribe(list -> {
-            menu.clear();
-            for (Device mediaServer : list) {
-                menu.add(mediaServer.getDetails().getFriendlyName());
-            }
-        });
+        //todo can we clean this up?
+        Menu menu = binding.navView.getMenu();
+        mainViewModel.getMediaServers().subscribe(list -> {
+                    for (Device mediaServer : list) {
+                        ArrayList<String> menuItems = new ArrayList<>();
+                        for (int x = 0; x < menu.size(); x++) {
+                            menuItems.add(menu.getItem(x).getTitle().toString());
+                        }
+                        if (!menuItems.contains(mediaServer.getDetails().getFriendlyName()))
+                            menu.add(mediaServer.getDetails().getFriendlyName());
+                    }
+                },
+                throwable -> Log.e(TAG, throwable.getMessage()));
+//        Menu menu = navigationView.getMenu();
+//        mainViewModel.getMediaServers().subscribe(list -> {
+//            menu.clear();
+//            for (Device mediaServer : list) {
+//                menu.add(mediaServer.getDetails().getFriendlyName());
+//            }
+//        });
+
+//        Menu menu = binding.navView.getMenu();
+//        mainViewModel.getMediaServers().subscribe(list -> {
+//            for (Device mediaServer : list) {
+//                ArrayList<String> menuItems = new ArrayList<>();
+//                for (int x = 0; x < menu.size(); x++) {
+//                    menuItems.add(menu.getItem(x).getTitle().toString());
+//                }
+//                if (!menuItems.contains(mediaServer.getDetails().getFriendlyName()))
+//                    menu.add(mediaServer.getDetails().getFriendlyName());
+//            }
+//        });
     }
 
     @Override
@@ -105,7 +130,7 @@ public class MainActivity extends AppCompatActivity
     @Override
     public boolean onNavigationItemSelected(@NonNull MenuItem item) {
         // Handle navigation view item clicks here.
-        viewModel.setSelectedDevice(item.getTitle().toString());
+        mainViewModel.selectMediaServer(item.getTitle().toString());
         DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
         drawer.closeDrawer(GravityCompat.START);
         return true;

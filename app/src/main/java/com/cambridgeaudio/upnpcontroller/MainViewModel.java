@@ -9,11 +9,17 @@ import android.databinding.ObservableArrayList;
 import com.cambridgeaudio.upnpcontroller.upnp.UpnpApi;
 
 import org.fourthline.cling.model.meta.Device;
+import org.fourthline.cling.support.model.DIDLObject;
 
+import java.lang.reflect.Array;
 import java.util.ArrayList;
+import java.util.List;
 
+import io.reactivex.BackpressureStrategy;
+import io.reactivex.Flowable;
 import io.reactivex.Observable;
 import io.reactivex.android.schedulers.AndroidSchedulers;
+import io.reactivex.schedulers.Schedulers;
 
 /**
  * Created by Ayo on 12/06/2017.
@@ -23,17 +29,14 @@ public class MainViewModel extends BaseObservable {
 
     private UpnpApi upnpApi;
 
-    //@Bindable
-   // public ObservableArrayList<DidlViewModel> didlList;
 
     public MainViewModel(UpnpApi upnpApi){
         this.upnpApi = upnpApi;
-      //  this.didlList = new ObservableArrayList<>();
     }
 
 
     public Observable<ArrayList<Device>> getMediaServers(){
-        return upnpApi.getMediaServers().observeOn(AndroidSchedulers.mainThread());
+        return upnpApi.getMediaServers().subscribeOn(Schedulers.io());
     }
 
     public ServiceConnection getServiceConnection(){
@@ -42,14 +45,25 @@ public class MainViewModel extends BaseObservable {
 
 
     public void selectMediaServer(String name){
-        getMediaServers().subscribe(devices -> {
+        getMediaServers().subscribe(devices ->{
             devices.stream().filter(d -> name.equals(d.getDetails().getFriendlyName())).forEach(d -> upnpApi.selectMediaServer(d));
-            browse("0");
-        });
+            //browse("0");
+        } );
+
     }
 
-    public void browse(String id) {
-       // this.didlList.clear();
-        //upnpApi.browse(id).subscribe(didlObject -> didlList.add(new DidlViewModel(didlObject)));
+    public Flowable<DIDLObject> browse(String id) {
+       return upnpApi.browse(id);
     }
+
+    public void select(String name){
+        getMediaServers().map(devices -> {
+            for(Device d : devices){
+                if (d.getDetails().getFriendlyName().equals(name))
+                    return ;
+
+            }
+        })
+    }
+
 }

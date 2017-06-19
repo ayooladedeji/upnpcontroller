@@ -3,6 +3,7 @@ package com.cambridgeaudio.upnpcontroller;
 import android.content.Context;
 import android.content.Intent;
 import android.databinding.DataBindingUtil;
+import android.support.annotation.MainThread;
 import android.support.annotation.NonNull;
 import android.support.design.widget.NavigationView;
 import android.support.v4.view.GravityCompat;
@@ -10,25 +11,30 @@ import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.ActionBarDrawerToggle;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.support.v7.widget.LinearLayoutManager;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.View;
 
 import com.cambridgeaudio.upnpcontroller.databinding.ActivityMainBinding;
 import com.cambridgeaudio.upnpcontroller.upnp.UpnpApiImpl;
 
 import org.fourthline.cling.android.AndroidUpnpServiceImpl;
 import org.fourthline.cling.model.meta.Device;
+import org.fourthline.cling.support.model.DIDLObject;
 
 import java.util.ArrayList;
 
 
 public class MainActivity extends AppCompatActivity
-        implements NavigationView.OnNavigationItemSelectedListener {
+        implements NavigationView.OnNavigationItemSelectedListener, DidlListAdapter.IonClickListener {
 
     private final String TAG = "MainActivity";
     private MainViewModel mainViewModel;
     private ActivityMainBinding binding;
+    private ArrayList<DIDLObject> didlList;
+    private DidlListAdapter adapter;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -48,6 +54,9 @@ public class MainActivity extends AppCompatActivity
         setSupportActionBar(binding.toolbar);
         setUpDrawerLayout();
 
+        binding.didlList.setLayoutManager(new LinearLayoutManager(this));
+        adapter = new DidlListAdapter(this, this);
+        binding.didlList.setAdapter(adapter);
 
     }
 
@@ -129,10 +138,32 @@ public class MainActivity extends AppCompatActivity
 
     @Override
     public boolean onNavigationItemSelected(@NonNull MenuItem item) {
-        // Handle navigation view item clicks here.
         mainViewModel.selectMediaServer(item.getTitle().toString());
-        DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
-        drawer.closeDrawer(GravityCompat.START);
+        Log.d(TAG, new UpnpApiImpl().getSelectedMediaServer().getDetails().getFriendlyName());
+//        try {
+//            Thread.sleep(10000);
+//        } catch (InterruptedException e) {
+//            e.printStackTrace();
+//        }
+//        mainViewModel
+//                .browse("0")
+//                .subscribe(
+//                        didlObject -> {
+//                            Log.d(TAG, didlObject.getId());
+//                            didlList.add(didlObject);
+//                        },
+//                        throwable -> Log.e(TAG, throwable.getMessage()),
+//                        this::updateAdapter);
+        binding.drawerLayout.closeDrawer(GravityCompat.START);
         return true;
+    }
+
+    @Override
+    public void didlOnClick(View v, int pos) {
+
+    }
+
+    public void updateAdapter() {
+        MainActivity.this.runOnUiThread(() -> adapter.update(didlList));
     }
 }

@@ -6,7 +6,6 @@ import org.fourthline.cling.model.meta.Device;
 import org.fourthline.cling.support.model.DIDLObject;
 
 import java.util.ArrayList;
-import java.util.List;
 
 import io.reactivex.Flowable;
 import io.reactivex.Observable;

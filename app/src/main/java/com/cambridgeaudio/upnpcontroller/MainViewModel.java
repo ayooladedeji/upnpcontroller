@@ -15,6 +15,7 @@ import java.util.ArrayList;
 import io.reactivex.Observable;
 import io.reactivex.Scheduler;
 import io.reactivex.android.schedulers.AndroidSchedulers;
+import io.reactivex.disposables.CompositeDisposable;
 import io.reactivex.functions.Function;
 import io.reactivex.schedulers.Schedulers;
 
@@ -26,6 +27,7 @@ public class MainViewModel extends BaseObservable {
 
     private UpnpApi upnpApi;
     private ArrayList<String> objectIdList = new ArrayList<>();
+    private CompositeDisposable disposables = new CompositeDisposable();
 
     @Bindable
     public ObservableArrayList<DidlViewModel> didlList = new ObservableArrayList<>();
@@ -36,7 +38,7 @@ public class MainViewModel extends BaseObservable {
 
 
     Observable<ArrayList<Device>> getMediaServers() {
-        return upnpApi.getMediaServers();
+        return upnpApi.getMediaServers().observeOn(AndroidSchedulers.mainThread());
     }
 
     ServiceConnection getServiceConnection() {
@@ -74,6 +76,6 @@ public class MainViewModel extends BaseObservable {
     }
 
     void cacheCurrentDirectory(){
-
+        disposables.add(upnpApi.scan(objectIdList.get(objectIdList.size() - 1)));
     }
 }

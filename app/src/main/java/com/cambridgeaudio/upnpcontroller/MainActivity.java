@@ -29,6 +29,10 @@ import org.fourthline.cling.model.meta.Device;
 
 import java.util.ArrayList;
 
+import io.reactivex.Scheduler;
+import io.reactivex.android.schedulers.AndroidSchedulers;
+import io.reactivex.schedulers.Schedulers;
+
 
 public class MainActivity extends AppCompatActivity
         implements NavigationView.OnNavigationItemSelectedListener {
@@ -73,15 +77,18 @@ public class MainActivity extends AppCompatActivity
         Menu menu = binding.navView.getMenu();
         mainViewModel.getMediaServers().subscribe(list -> {
                     for (Device mediaServer : list) {
-                        ArrayList<String> menuItems = new ArrayList<>();
-                        for (int x = 0; x < menu.size(); x++) {
-                            menuItems.add(menu.getItem(x).getTitle().toString());
-                        }
-                        if (!menuItems.contains(mediaServer.getDetails().getFriendlyName()))
-                            menu.add(mediaServer.getDetails().getFriendlyName());
+                        menu.add(mediaServer.getDetails().getFriendlyName());
+//                        ArrayList<String> menuItems = new ArrayList<>();
+//                        for (int x = 0; x < menu.size(); x++) {
+//                            menuItems.add(menu.getItem(x).getTitle().toString());
+//                        }
+//                        if (!menuItems.contains(mediaServer.getDetails().getFriendlyName()))
+//                            menu.add(mediaServer.getDetails().getFriendlyName());
                     }
                 },
-                throwable -> Log.e(TAG, throwable.getMessage()));
+                throwable -> Log.e(TAG," " + throwable.getMessage()));
+
+
 
     }
 
@@ -135,6 +142,7 @@ public class MainActivity extends AppCompatActivity
     }
 
     public void cacheDirectory(View view) {
-        Toast.makeText(MainActivity.this, "clicked floating action button", Toast.LENGTH_SHORT).show();
+        mainViewModel.cacheCurrentDirectory();
     }
+
 }

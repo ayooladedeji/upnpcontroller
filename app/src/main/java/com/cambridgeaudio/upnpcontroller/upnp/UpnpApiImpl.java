@@ -119,14 +119,12 @@ public class UpnpApiImpl implements UpnpApi {
     @Override
     public Disposable scan(String id) {
         return recursiveScan(id)
-                .observeOn(AndroidSchedulers.mainThread())
                 .subscribeOn(Schedulers.io())
                 .subscribe(didlObject -> {
                     if (didlObject instanceof AudioItem) {
                         Log.d(TAG, didlObject.getTitle());
                     }
                 });
-        //todo instead of logging we need to add to the db, this method should also probably take a db instance?
     }
 
     @Override
@@ -191,7 +189,7 @@ public class UpnpApiImpl implements UpnpApi {
         void deviceAdded(final Device device) {
             if (Objects.equals(device.getType().getType(), "MediaServer")) {
                 Log.d(TAG, "Discovered device: " + device.getDetails().getFriendlyName());
-                //mediaServers.removeIf(d -> d.getDetails().getFriendlyName().equals(device.getDetails().getFriendlyName()));
+                mediaServers.removeIf(d -> d.getDetails().getFriendlyName().equals(device.getDetails().getFriendlyName()));
                 mediaServers.add(device);
                 mediaServersSubject.onNext(mediaServers);
             }

@@ -1,11 +1,11 @@
-package com.cambridgeaudio.upnpcontroller.binding;
+package com.cambridgeaudio.upnpcontroller.recyclerbinding.binding;
 
 import android.databinding.BindingAdapter;
 import android.support.v7.widget.RecyclerView;
 
-import com.cambridgeaudio.upnpcontroller.adapter.BindingRecyclerViewAdapter;
-import com.cambridgeaudio.upnpcontroller.adapter.ClickHandler;
-import com.cambridgeaudio.upnpcontroller.adapter.binder.ItemBinder;
+import com.cambridgeaudio.upnpcontroller.recyclerbinding.adapter.BindingRecyclerViewAdapter;
+import com.cambridgeaudio.upnpcontroller.recyclerbinding.adapter.ClickHandler;
+import com.cambridgeaudio.upnpcontroller.recyclerbinding.adapter.binder.ItemBinder;
 
 import java.util.Collection;
 

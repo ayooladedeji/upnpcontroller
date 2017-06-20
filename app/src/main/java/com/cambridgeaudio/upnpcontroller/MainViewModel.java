@@ -30,21 +30,21 @@ public class MainViewModel extends BaseObservable {
     @Bindable
     public ObservableArrayList<DidlViewModel> didlList = new ObservableArrayList<>();
 
-    public MainViewModel(UpnpApi upnpApi) {
+    MainViewModel(UpnpApi upnpApi) {
         this.upnpApi = upnpApi;
     }
 
 
-    public Observable<ArrayList<Device>> getMediaServers() {
+    Observable<ArrayList<Device>> getMediaServers() {
         return upnpApi.getMediaServers();
     }
 
-    public ServiceConnection getServiceConnection() {
+    ServiceConnection getServiceConnection() {
         return upnpApi.getServiceConnection();
     }
 
 
-    public void selectMediaServer(String name) {
+    void selectMediaServer(String name) {
         getMediaServers()
                 .observeOn(AndroidSchedulers.mainThread())
                 .subscribe(devices -> {
@@ -54,7 +54,7 @@ public class MainViewModel extends BaseObservable {
 
     }
 
-    public void browse(String id) {
+    void browse(String id) {
         objectIdList.add(id);
         this.didlList.clear();
         upnpApi.browse(id)
@@ -62,14 +62,18 @@ public class MainViewModel extends BaseObservable {
                 .subscribe(didlObject -> didlList.add(new DidlViewModel(didlObject)));
     }
 
-    public void goBack(){
+    void goBack(){
         if(objectIdList.size() > 1){
             objectIdList.remove(objectIdList.size() - 1);
             browse(objectIdList.get(objectIdList.size() - 1));
         }
     }
 
-    public boolean isAtRoot(){
+    boolean isAtRoot(){
         return objectIdList.size() == 1;
+    }
+
+    void cacheCurrentDirectory(){
+
     }
 }

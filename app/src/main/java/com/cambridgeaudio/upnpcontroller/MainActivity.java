@@ -14,12 +14,13 @@ import android.support.v7.widget.LinearLayoutManager;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.View;
 import android.widget.Toast;
 
-import com.cambridgeaudio.upnpcontroller.adapter.ClickHandler;
-import com.cambridgeaudio.upnpcontroller.adapter.binder.CompositeItemBinder;
-import com.cambridgeaudio.upnpcontroller.adapter.binder.ItemBinder;
-import com.cambridgeaudio.upnpcontroller.binder.DidlObjectBinder;
+import com.cambridgeaudio.upnpcontroller.recyclerbinding.adapter.ClickHandler;
+import com.cambridgeaudio.upnpcontroller.recyclerbinding.adapter.binder.CompositeItemBinder;
+import com.cambridgeaudio.upnpcontroller.recyclerbinding.adapter.binder.ItemBinder;
+import com.cambridgeaudio.upnpcontroller.recyclerbinding.binder.DidlObjectBinder;
 import com.cambridgeaudio.upnpcontroller.databinding.ActivityMainBinding;
 import com.cambridgeaudio.upnpcontroller.upnp.UpnpApiImpl;
 
@@ -99,19 +100,13 @@ public class MainActivity extends AppCompatActivity
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
-        // Inflate the menu; this adds items to the action bar if it is present.
         getMenuInflater().inflate(R.menu.main, menu);
         return true;
     }
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
-        // Handle action bar item clicks here. The action bar will
-        // automatically handle clicks on the Home/Up button, so long
-        // as you specify a parent activity in AndroidManifest.xml.
         int id = item.getItemId();
-
-        //noinspection SimplifiableIfStatement
         if (id == R.id.action_settings) {
             return true;
         }
@@ -121,7 +116,6 @@ public class MainActivity extends AppCompatActivity
 
     @Override
     public boolean onNavigationItemSelected(@NonNull MenuItem item) {
-        // Handle navigation view item clicks here.
         mainViewModel.selectMediaServer(item.getTitle().toString());
         DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
         drawer.closeDrawer(GravityCompat.START);
@@ -129,18 +123,18 @@ public class MainActivity extends AppCompatActivity
     }
 
     public ClickHandler<DidlViewModel> clickHandler() {
-        return new ClickHandler<DidlViewModel>() {
-            @Override
-            public void onClick(DidlViewModel didlViewModel) {
-                mainViewModel.browse(didlViewModel.getId());
-                Toast.makeText(MainActivity.this, didlViewModel.getTitle(), Toast.LENGTH_SHORT).show();
-            }
+        return didlViewModel -> {
+            mainViewModel.browse(didlViewModel.getId());
+            Toast.makeText(MainActivity.this, didlViewModel.getTitle(), Toast.LENGTH_SHORT).show();
         };
     }
 
     public ItemBinder<DidlViewModel> itemViewBinder() {
-        return new CompositeItemBinder<DidlViewModel>(
-                new DidlObjectBinder(com.cambridgeaudio.upnpcontroller.BR.didl, R.layout.item_didl)
-        );
+        return new CompositeItemBinder<>(
+                new DidlObjectBinder(com.cambridgeaudio.upnpcontroller.BR.didl, R.layout.item_didl));
+    }
+
+    public void cacheDirectory(View view) {
+        Toast.makeText(MainActivity.this, "clicked floating action button", Toast.LENGTH_SHORT).show();
     }
 }

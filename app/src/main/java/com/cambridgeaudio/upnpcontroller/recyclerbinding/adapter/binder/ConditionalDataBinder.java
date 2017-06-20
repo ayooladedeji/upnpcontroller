@@ -1,4 +1,4 @@
-package com.cambridgeaudio.upnpcontroller.adapter.binder;
+package com.cambridgeaudio.upnpcontroller.recyclerbinding.adapter.binder;
 
 public abstract class ConditionalDataBinder<T> extends ItemBinderBase<T> {
     public ConditionalDataBinder(int bindingVariable, int layoutId) {

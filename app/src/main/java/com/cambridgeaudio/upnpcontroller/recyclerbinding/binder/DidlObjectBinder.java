@@ -1,7 +1,7 @@
-package com.cambridgeaudio.upnpcontroller.binder;
+package com.cambridgeaudio.upnpcontroller.recyclerbinding.binder;
 
 import com.cambridgeaudio.upnpcontroller.DidlViewModel;
-import com.cambridgeaudio.upnpcontroller.adapter.binder.ConditionalDataBinder;
+import com.cambridgeaudio.upnpcontroller.recyclerbinding.adapter.binder.ConditionalDataBinder;
 
 public class DidlObjectBinder extends ConditionalDataBinder<DidlViewModel> {
     public DidlObjectBinder(int bindingVariable, int layoutId) {

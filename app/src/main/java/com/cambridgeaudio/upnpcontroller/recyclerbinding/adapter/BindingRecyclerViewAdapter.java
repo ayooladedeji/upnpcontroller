@@ -1,4 +1,4 @@
-package com.cambridgeaudio.upnpcontroller.adapter;
+package com.cambridgeaudio.upnpcontroller.recyclerbinding.adapter;
 
 import android.databinding.DataBindingUtil;
 import android.databinding.ObservableArrayList;
@@ -11,7 +11,7 @@ import android.view.View;
 import android.view.ViewGroup;
 
 
-import com.cambridgeaudio.upnpcontroller.adapter.binder.ItemBinder;
+import com.cambridgeaudio.upnpcontroller.recyclerbinding.adapter.binder.ItemBinder;
 
 import java.lang.ref.WeakReference;
 import java.util.Collection;

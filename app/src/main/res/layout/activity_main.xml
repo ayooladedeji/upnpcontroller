@@ -14,8 +14,7 @@
             type="com.cambridgeaudio.upnpcontroller.MainActivity" />
     </data>
 
-    <android.support.v4.widget.DrawerLayout
-        xmlns:tools="http://schemas.android.com/tools"
+    <android.support.v4.widget.DrawerLayout xmlns:tools="http://schemas.android.com/tools"
         android:id="@+id/drawer_layout"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
@@ -50,14 +49,23 @@
 
                 <android.support.v7.widget.RecyclerView
                     android:id="@+id/didl_list"
-                    android:scrollbars="vertical"
                     android:layout_width="match_parent"
                     android:layout_height="match_parent"
-                    app:items="@{mainViewModel.didlList}"
-                    app:itemViewBinder="@{view.itemViewBinder}"
+                    android:scrollbars="vertical"
                     app:clickHandler="@{view.clickHandler}"
-                    />
+                    app:itemViewBinder="@{view.itemViewBinder}"
+                    app:items="@{mainViewModel.didlList}" />
 
+                <android.support.design.widget.FloatingActionButton
+                    android:id="@+id/cache_button"
+                    android:onClick="cacheDirectory"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_margin="16dp"
+                    android:layout_alignParentBottom="true"
+                    android:layout_alignParentEnd="true"
+                    android:src="@drawable/ic_add_black_36dp"
+                     />
             </RelativeLayout>
 
 

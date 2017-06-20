@@ -1,4 +1,4 @@
-package com.cambridgeaudio.upnpcontroller.adapter.binder;
+package com.cambridgeaudio.upnpcontroller.recyclerbinding.adapter.binder;
 
 public class CompositeItemBinder<T> implements ItemBinder<T> {
     private final ConditionalDataBinder<T>[] conditionalDataBinders;

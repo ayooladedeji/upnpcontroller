@@ -6,6 +6,7 @@ import android.databinding.BaseObservable;
 import android.databinding.Bindable;
 import android.databinding.ObservableArrayList;
 
+import com.cambridgeaudio.upnpcontroller.database.AppDatabase;
 import com.cambridgeaudio.upnpcontroller.upnp.UpnpApi;
 
 import org.fourthline.cling.model.meta.Device;
@@ -26,14 +27,16 @@ import io.reactivex.schedulers.Schedulers;
 public class MainViewModel extends BaseObservable {
 
     private UpnpApi upnpApi;
+    private AppDatabase appDatabase;
     private ArrayList<String> objectIdList = new ArrayList<>();
     private CompositeDisposable disposables = new CompositeDisposable();
 
     @Bindable
     public ObservableArrayList<DidlViewModel> didlList = new ObservableArrayList<>();
 
-    MainViewModel(UpnpApi upnpApi) {
+    MainViewModel(UpnpApi upnpApi, AppDatabase appDatabase) {
         this.upnpApi = upnpApi;
+        this.appDatabase = appDatabase;
     }
 
 

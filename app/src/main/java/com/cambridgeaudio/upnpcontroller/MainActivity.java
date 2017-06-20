@@ -17,6 +17,8 @@ import android.view.MenuItem;
 import android.view.View;
 import android.widget.Toast;
 
+import com.cambridgeaudio.upnpcontroller.database.AppDatabase;
+import com.cambridgeaudio.upnpcontroller.database.Track;
 import com.cambridgeaudio.upnpcontroller.recyclerbinding.adapter.ClickHandler;
 import com.cambridgeaudio.upnpcontroller.recyclerbinding.adapter.binder.CompositeItemBinder;
 import com.cambridgeaudio.upnpcontroller.recyclerbinding.adapter.binder.ItemBinder;
@@ -27,11 +29,7 @@ import com.cambridgeaudio.upnpcontroller.upnp.UpnpApiImpl;
 import org.fourthline.cling.android.AndroidUpnpServiceImpl;
 import org.fourthline.cling.model.meta.Device;
 
-import java.util.ArrayList;
 
-import io.reactivex.Scheduler;
-import io.reactivex.android.schedulers.AndroidSchedulers;
-import io.reactivex.schedulers.Schedulers;
 
 
 public class MainActivity extends AppCompatActivity
@@ -44,7 +42,7 @@ public class MainActivity extends AppCompatActivity
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        mainViewModel = new MainViewModel(new UpnpApiImpl());
+        mainViewModel = new MainViewModel(new UpnpApiImpl(), AppDatabase.getAppDatabase(this));
 
         binding = DataBindingUtil.setContentView(this, R.layout.activity_main);
         binding.setMainViewModel(mainViewModel);
@@ -59,7 +57,6 @@ public class MainActivity extends AppCompatActivity
 
         setSupportActionBar(binding.toolbar);
         setUpDrawerLayout();
-
 
     }
 

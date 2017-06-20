@@ -27,8 +27,6 @@ import org.fourthline.cling.android.AndroidUpnpServiceImpl;
 import org.fourthline.cling.model.meta.Device;
 
 import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.Set;
 
 
 public class MainActivity extends AppCompatActivity
@@ -70,43 +68,30 @@ public class MainActivity extends AppCompatActivity
     }
 
     private void getMediaServers() {
-        //todo can we clean this up?
+        //todo this is not very stable
         Menu menu = binding.navView.getMenu();
-//        mainViewModel.getMediaServers().subscribe(list -> {
-//                    for (Device mediaServer : list) {
-//                        ArrayList<String> menuItems = new ArrayList<>();
-//                        for (int x = 0; x < menu.size(); x++) {
-//                            menuItems.add(menu.getItem(x).getTitle().toString());
-//                        }
-//                        if (!menuItems.contains(mediaServer.getDetails().getFriendlyName()))
-//                            menu.add(mediaServer.getDetails().getFriendlyName());
-//                    }
-//                },
-//                throwable -> Log.e(TAG, throwable.getMessage()));
-        ArrayList<String> menuItems = new ArrayList<>();
-        mainViewModel
-                .getMediaServers()
-                .subscribe(list -> {
-                            for (Device mediaServer : list) {
-                                String serverName = mediaServer.getDetails().getFriendlyName();
-                                if(!menuItems.contains(serverName)){
-                                    Log.d(TAG, " does not contain" + serverName + ": " + !menuItems.contains(serverName));
-                                    menuItems.add(serverName);
-                                }
-                            }
-                            for (String menuItem : menuItems){
-                                menu.add(menuItem);
-                            }
-                        },
-                        throwable -> Log.d(TAG, throwable.getMessage()));
+        mainViewModel.getMediaServers().subscribe(list -> {
+                    for (Device mediaServer : list) {
+                        ArrayList<String> menuItems = new ArrayList<>();
+                        for (int x = 0; x < menu.size(); x++) {
+                            menuItems.add(menu.getItem(x).getTitle().toString());
+                        }
+                        if (!menuItems.contains(mediaServer.getDetails().getFriendlyName()))
+                            menu.add(mediaServer.getDetails().getFriendlyName());
+                    }
+                },
+                throwable -> Log.e(TAG, throwable.getMessage()));
+
     }
 
 
     @Override
     public void onBackPressed() {
-        DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
+        DrawerLayout drawer = binding.drawerLayout;
         if (drawer.isDrawerOpen(GravityCompat.START)) {
             drawer.closeDrawer(GravityCompat.START);
+        } else if(!mainViewModel.isAtRoot()){
+            mainViewModel.goBack();
         } else {
             super.onBackPressed();
         }
@@ -147,6 +132,7 @@ public class MainActivity extends AppCompatActivity
         return new ClickHandler<DidlViewModel>() {
             @Override
             public void onClick(DidlViewModel didlViewModel) {
+                mainViewModel.browse(didlViewModel.getId());
                 Toast.makeText(MainActivity.this, didlViewModel.getTitle(), Toast.LENGTH_SHORT).show();
             }
         };

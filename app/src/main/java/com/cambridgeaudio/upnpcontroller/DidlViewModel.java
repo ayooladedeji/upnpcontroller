@@ -20,4 +20,6 @@ public class DidlViewModel extends BaseObservable {
     public DIDLObject getModel(){return model;}
 
     public String getTitle(){return model.getTitle();}
+
+    public String getId(){return model.getId();}
 }

@@ -25,6 +25,7 @@ import io.reactivex.schedulers.Schedulers;
 public class MainViewModel extends BaseObservable {
 
     private UpnpApi upnpApi;
+    private ArrayList<String> objectIdList = new ArrayList<>();
 
     @Bindable
     public ObservableArrayList<DidlViewModel> didlList = new ObservableArrayList<>();
@@ -54,9 +55,21 @@ public class MainViewModel extends BaseObservable {
     }
 
     public void browse(String id) {
+        objectIdList.add(id);
         this.didlList.clear();
         upnpApi.browse(id)
                 .observeOn(AndroidSchedulers.mainThread())
                 .subscribe(didlObject -> didlList.add(new DidlViewModel(didlObject)));
+    }
+
+    public void goBack(){
+        if(objectIdList.size() > 1){
+            objectIdList.remove(objectIdList.size() - 1);
+            browse(objectIdList.get(objectIdList.size() - 1));
+        }
+    }
+
+    public boolean isAtRoot(){
+        return objectIdList.size() == 1;
     }
 }

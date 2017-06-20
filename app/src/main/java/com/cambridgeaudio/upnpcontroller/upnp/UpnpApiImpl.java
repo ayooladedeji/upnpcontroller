@@ -191,12 +191,7 @@ public class UpnpApiImpl implements UpnpApi {
         void deviceAdded(final Device device) {
             if (Objects.equals(device.getType().getType(), "MediaServer")) {
                 Log.d(TAG, "Discovered device: " + device.getDetails().getFriendlyName());
-                for (Iterator<Device> iterator = mediaServers.iterator(); iterator.hasNext(); ) {
-                    Device d = iterator.next();
-                    if (d.getDetails().getFriendlyName().equals(device.getDetails().getFriendlyName())) {
-                        iterator.remove();
-                    }
-                }
+                //mediaServers.removeIf(d -> d.getDetails().getFriendlyName().equals(device.getDetails().getFriendlyName()));
                 mediaServers.add(device);
                 mediaServersSubject.onNext(mediaServers);
             }

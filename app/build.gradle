@@ -11,7 +11,7 @@ android {
     buildToolsVersion "25.0.2"
     defaultConfig {
         applicationId "com.cambridgeaudio.upnpcontroller"
-        minSdkVersion 19
+        minSdkVersion 24
         targetSdkVersion 25
         versionCode 1
         versionName "1.0"
@@ -19,15 +19,10 @@ android {
 
         multiDexEnabled true
 
-        jackOptions {
-            enabled true
-        }
+
     }
 
-    compileOptions {
-        sourceCompatibility JavaVersion.VERSION_1_8
-        targetCompatibility JavaVersion.VERSION_1_8
-    }
+
 
     buildTypes {
         release {
@@ -43,6 +38,10 @@ android {
         enabled = true
     }
 
+    compileOptions {
+        targetCompatibility 1.8
+        sourceCompatibility 1.8
+    }
 }
 
 dependencies {
@@ -51,11 +50,11 @@ dependencies {
         exclude group: 'com.android.support', module: 'support-annotations'
     })
 
-    compile 'com.android.support:appcompat-v7:25.3.1'
+    compile 'com.android.support:appcompat-v7:25.4.0'
     compile 'com.android.support.constraint:constraint-layout:1.0.2'
-    compile "com.android.support:recyclerview-v7:25.3.1"
-    compile "com.android.support:design:25.3.1"
-    compile "com.google.guava:guava:20.0"
+    compile "com.android.support:recyclerview-v7:25.4.0"
+    compile "com.android.support:design:25.4.0"
+    compile "com.google.guava:guava:21.0"
 
     testCompile 'junit:junit:4.12'
 
@@ -72,8 +71,9 @@ dependencies {
     compile group: 'org.slf4j', name: 'slf4j-jdk14', version:'1.7.14'
 
 
+
     //  Rx dependencies
-    compile 'io.reactivex.rxjava2:rxjava:2.0.7'
+    compile 'io.reactivex.rxjava2:rxjava:2.0.9'
     compile 'io.reactivex.rxjava2:rxandroid:2.0.1'
     compile "com.github.akarnokd:rxjava2-extensions:0.16.0"
     compile 'com.jakewharton.rxrelay2:rxrelay:2.0.0'

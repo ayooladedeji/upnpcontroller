@@ -24,11 +24,11 @@ public interface UpnpApi {
 
     Flowable<DIDLObject> recursiveScan(String id);
 
-    Disposable scan(String id);
+    Flowable<DIDLObject> scan(String id);
 
     Observable<ArrayList<Device>> getMediaServers();
 
-    Device getSelectedDevice();
+    Device getSelectedMediaServer();
 
     void selectMediaServer(Device device);
 

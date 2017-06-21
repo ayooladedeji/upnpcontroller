@@ -31,7 +31,6 @@ import io.reactivex.BackpressureStrategy;
 import io.reactivex.Flowable;
 import io.reactivex.Observable;
 import io.reactivex.android.schedulers.AndroidSchedulers;
-import io.reactivex.disposables.CompositeDisposable;
 import io.reactivex.disposables.Disposable;
 import io.reactivex.schedulers.Schedulers;
 import io.reactivex.subjects.BehaviorSubject;
@@ -48,17 +47,17 @@ public class UpnpApiImpl implements UpnpApi {
     private BrowseRegistryListener registryListener = new BrowseRegistryListener();
     private AndroidUpnpService upnpService;
     private ControlPoint controlPoint;
-    private Device selectedDevice = null;
+    private Device selectedMediaServer = null;
     private ArrayList<Device> mediaServers = new ArrayList<>();
 
     //rx objects
     private BehaviorSubject<ArrayList<Device>> mediaServersSubject = BehaviorSubject.create();
 
-    private ServiceConnection serviceConnection = null;
+    private ServiceConnection serviceConnection  = null;
 
     @Override
     public ServiceConnection getServiceConnection() {
-        if (serviceConnection == null) {
+        if(serviceConnection == null){
             serviceConnection = new ServiceConnection() {
 
                 public void onServiceConnected(ComponentName className, IBinder service) {
@@ -88,7 +87,7 @@ public class UpnpApiImpl implements UpnpApi {
 
     @Override
     public Flowable<DIDLObject> browse(String id) {
-        return Flowable.create(e -> controlPoint.execute(new Browse(selectedDevice.findService(new UDAServiceType("ContentDirectory")), id, BrowseFlag.DIRECT_CHILDREN, "*", 0, null, new SortCriterion(true, "dc:title")) {
+        return Flowable.create(e -> controlPoint.execute(new Browse(selectedMediaServer.findService(new UDAServiceType("ContentDirectory")), id, BrowseFlag.DIRECT_CHILDREN, "*", 0, null, new SortCriterion(true, "dc:title")) {
             @Override
             public void received(ActionInvocation actionInvocation, DIDLContent didl) {
                 didl.getContainers().forEach(e::onNext);
@@ -118,16 +117,19 @@ public class UpnpApiImpl implements UpnpApi {
     }
 
     @Override
-    public Disposable scan(String id) {
+    public Flowable<DIDLObject> scan(String id) {
+
         return recursiveScan(id)
-                .observeOn(AndroidSchedulers.mainThread())
                 .subscribeOn(Schedulers.io())
-                .subscribe(didlObject -> {
-                    if (didlObject instanceof AudioItem) {
-                        Log.d(TAG, didlObject.getTitle());
-                    }
-                });
-        //todo instead of logging we need to add to the db, this method should also probably take a db instance?
+                .filter(didlObject -> didlObject instanceof AudioItem);
+
+//        return recursiveScan(id)
+//                .subscribeOn(Schedulers.io())
+//                .subscribe(didlObject -> {
+//                    if (didlObject instanceof AudioItem) {
+//                        Log.d(TAG, didlObject.getTitle());
+//                    }
+//                });
     }
 
     @Override
@@ -136,19 +138,20 @@ public class UpnpApiImpl implements UpnpApi {
     }
 
 
-    @Override
-    public Device getSelectedDevice() {
-        return selectedDevice;
+    public Device getSelectedMediaServer() {
+        return selectedMediaServer;
     }
 
     @Override
     public void selectMediaServer(Device device) {
-        selectedDevice = device;
+        Log.d(TAG, "device selected: "+ device.getDetails().getFriendlyName());
+        selectedMediaServer = device;
     }
 
     @Override
     public void destroy() {
         upnpService.getRegistry().removeListener(registryListener);
+
     }
 
     private class BrowseRegistryListener extends DefaultRegistryListener {
@@ -191,12 +194,7 @@ public class UpnpApiImpl implements UpnpApi {
         void deviceAdded(final Device device) {
             if (Objects.equals(device.getType().getType(), "MediaServer")) {
                 Log.d(TAG, "Discovered device: " + device.getDetails().getFriendlyName());
-                for (Iterator<Device> iterator = mediaServers.iterator(); iterator.hasNext(); ) {
-                    Device d = iterator.next();
-                    if (d.getDetails().getFriendlyName().equals(device.getDetails().getFriendlyName())) {
-                        iterator.remove();
-                    }
-                }
+                mediaServers.removeIf(d -> d.getDetails().getFriendlyName().equals(device.getDetails().getFriendlyName()));
                 mediaServers.add(device);
                 mediaServersSubject.onNext(mediaServers);
             }

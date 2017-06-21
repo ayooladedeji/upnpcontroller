@@ -12,14 +12,14 @@ import android.arch.persistence.room.PrimaryKey;
 @Entity(tableName = "tracks")
 public class Track {
 
-    @PrimaryKey(autoGenerate = true)
-    private int id;
+    //@PrimaryKey(autoGenerate = true)
+    //private int id;
 
     @ColumnInfo(name = "artist")
     private String artist;
 
-    @ColumnInfo(name = "artists")
-    private String artists;
+//    @ColumnInfo(name = "artists")
+//    private String artists;
 
     @ColumnInfo(name = "album")
     private String album;
@@ -36,17 +36,22 @@ public class Track {
     @ColumnInfo(name = "date")
     private String date;
 
-    @ColumnInfo(name = "audio_uri")
-    private String audioUri;
+    @PrimaryKey
+    @ColumnInfo(name = "media_path")
+    private String mediaPath;
+
+    @ColumnInfo(name = "track_title")
+    private String trackTitle;
 
 
-    public int getId() {
-        return id;
-    }
+//    public int getId() {
+//        return id;
+//    }
 
-    public void setId(int id) {
-        this.id = id;
-    }
+//    public void setId(int id) {
+//        this.id = id;
+//    }
+
 
     public String getArtist() {
         return artist;
@@ -54,14 +59,6 @@ public class Track {
 
     public void setArtist(String artist) {
         this.artist = artist;
-    }
-
-    public String getArtists() {
-        return artists;
-    }
-
-    public void setArtists(String artists) {
-        this.artists = artists;
     }
 
     public String getAlbum() {
@@ -104,11 +101,19 @@ public class Track {
         this.date = date;
     }
 
-    public String getAudioUri() {
-        return audioUri;
+    public String getMediaPath() {
+        return mediaPath;
     }
 
-    public void setAudioUri(String audioUri) {
-        this.audioUri = audioUri;
+    public void setMediaPath(String mediaPath) {
+        this.mediaPath = mediaPath;
+    }
+
+    public String getTrackTitle() {
+        return trackTitle;
+    }
+
+    public void setTrackTitle(String trackTitle) {
+        this.trackTitle = trackTitle;
     }
 }

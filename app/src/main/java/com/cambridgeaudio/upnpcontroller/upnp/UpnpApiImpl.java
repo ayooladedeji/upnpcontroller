@@ -117,14 +117,19 @@ public class UpnpApiImpl implements UpnpApi {
     }
 
     @Override
-    public Disposable scan(String id) {
+    public Flowable<DIDLObject> scan(String id) {
+
         return recursiveScan(id)
                 .subscribeOn(Schedulers.io())
-                .subscribe(didlObject -> {
-                    if (didlObject instanceof AudioItem) {
-                        Log.d(TAG, didlObject.getTitle());
-                    }
-                });
+                .filter(didlObject -> didlObject instanceof AudioItem);
+
+//        return recursiveScan(id)
+//                .subscribeOn(Schedulers.io())
+//                .subscribe(didlObject -> {
+//                    if (didlObject instanceof AudioItem) {
+//                        Log.d(TAG, didlObject.getTitle());
+//                    }
+//                });
     }
 
     @Override

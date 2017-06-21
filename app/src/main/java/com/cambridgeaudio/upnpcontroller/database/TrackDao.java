@@ -7,6 +7,7 @@ import android.arch.persistence.room.Query;
 import java.util.List;
 
 import static android.arch.persistence.room.OnConflictStrategy.REPLACE;
+import static android.arch.persistence.room.OnConflictStrategy.ROLLBACK;
 
 /**
  * Created by Ayo on 02/06/2017.
@@ -18,6 +19,6 @@ public interface TrackDao {
     @Query("select * from tracks")
     List<Track> getAll();
 
-    @Insert(onConflict = REPLACE)
+    @Insert(onConflict = ROLLBACK)
     void insert(Track... tracks);
 }

@@ -19,6 +19,7 @@ import org.fourthline.cling.support.model.item.MusicTrack;
 import java.util.ArrayList;
 import java.util.concurrent.TimeUnit;
 
+import io.fabric.sdk.android.services.common.Crash;
 import io.reactivex.BackpressureStrategy;
 import io.reactivex.Flowable;
 import io.reactivex.Observable;
@@ -50,8 +51,6 @@ public class MainViewModel extends BaseObservable {
         viewController.showProgressDialog(null, "Finding servers....");
         return upnpApi
                 .getMediaServers();
-                //.timeout(1, TimeUnit.SECONDS, Observable.create(e -> viewController.dismissProgressDialog()))
-                //.observeOn(AndroidSchedulers.mainThread());
     }
 
     ServiceConnection getServiceConnection() {
@@ -71,13 +70,13 @@ public class MainViewModel extends BaseObservable {
     }
 
     void browse(String id) {
-//        viewController.showLoadingDialog();
+        viewController.showProgressDialog(null, "loading directory...");
         objectIdList.add(id);
         this.didlList.clear();
         upnpApi.browse(id)
-//                .timeout(500, TimeUnit.MILLISECONDS, Flowable.create(e -> {
-//                    viewController.hideLoadingDialog();
-//                }, BackpressureStrategy.BUFFER))
+                .timeout(2, TimeUnit.SECONDS, Flowable.create(e -> {
+                    viewController.dismissProgressDialog();
+                }, BackpressureStrategy.BUFFER))
                 .observeOn(AndroidSchedulers.mainThread())
                 .subscribe(didlObject -> didlList.add(new DidlViewModel(didlObject)));
     }
@@ -94,11 +93,16 @@ public class MainViewModel extends BaseObservable {
     }
 
     void cacheCurrentDirectory() {
+        viewController.showProgressDialog(null, "Caching directory...");
         Log.d(TAG, "Cache started");
+        long currentTime = System.currentTimeMillis();
         String directoryId = objectIdList.get(objectIdList.size() - 1);
         upnpApi.scan(directoryId)
                 .timeout(15, TimeUnit.SECONDS, Flowable.create(e -> {
                     Log.d(TAG, "Cache complete");
+                    viewController.dismissProgressDialog();
+                    long elapsedTime = System.currentTimeMillis() - currentTime;
+                    Crashlytics.log("Cache time: " + elapsedTime);
                 }, BackpressureStrategy.BUFFER))
                 .subscribe(didlObject -> {
                     Log.d(TAG, "Added Track to database: " + didlObject.getTitle());

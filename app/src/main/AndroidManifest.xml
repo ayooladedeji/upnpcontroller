@@ -24,6 +24,9 @@
 
         <service android:name="org.fourthline.cling.android.AndroidUpnpServiceImpl"/>
 
+        <meta-data
+            android:name="io.fabric.ApiKey"
+            android:value="8b380c582c4c8965f161b5025990240f2416f58d" />
     </application>
 
 </manifest>

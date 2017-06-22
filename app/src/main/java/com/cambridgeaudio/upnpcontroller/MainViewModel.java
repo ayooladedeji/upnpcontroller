@@ -9,6 +9,7 @@ import android.util.Log;
 import com.cambridgeaudio.upnpcontroller.database.AppDatabase;
 import com.cambridgeaudio.upnpcontroller.database.Track;
 import com.cambridgeaudio.upnpcontroller.upnp.UpnpApi;
+import com.crashlytics.android.Crashlytics;
 
 import org.fourthline.cling.model.meta.Device;
 import org.fourthline.cling.support.model.DIDLObject;
@@ -21,6 +22,7 @@ import java.util.concurrent.TimeUnit;
 import io.reactivex.BackpressureStrategy;
 import io.reactivex.Flowable;
 import io.reactivex.Observable;
+import io.reactivex.Observer;
 import io.reactivex.android.schedulers.AndroidSchedulers;
 import io.reactivex.disposables.CompositeDisposable;
 
@@ -34,19 +36,23 @@ public class MainViewModel extends BaseObservable {
     private UpnpApi upnpApi;
     private AppDatabase appDatabase;
     private ArrayList<String> objectIdList = new ArrayList<>();
-    private CompositeDisposable disposables = new CompositeDisposable();
-
+    private ViewController viewController;
     @Bindable
     public ObservableArrayList<DidlViewModel> didlList = new ObservableArrayList<>();
 
-    MainViewModel(UpnpApi upnpApi, AppDatabase appDatabase) {
+    MainViewModel(UpnpApi upnpApi, AppDatabase appDatabase, ViewController viewController) {
         this.upnpApi = upnpApi;
         this.appDatabase = appDatabase;
+        this.viewController = viewController;
     }
 
 
     Observable<ArrayList<Device>> getMediaServers() {
         return upnpApi.getMediaServers().observeOn(AndroidSchedulers.mainThread());
+    }
+
+    Observable<Device> testGetMediaServers() {
+        return upnpApi.testGetMediaServers().observeOn(AndroidSchedulers.mainThread());
     }
 
     ServiceConnection getServiceConnection() {
@@ -65,9 +71,13 @@ public class MainViewModel extends BaseObservable {
     }
 
     void browse(String id) {
+//        viewController.showLoadingDialog();
         objectIdList.add(id);
         this.didlList.clear();
         upnpApi.browse(id)
+//                .timeout(500, TimeUnit.MILLISECONDS, Flowable.create(e -> {
+//                    viewController.hideLoadingDialog();
+//                }, BackpressureStrategy.BUFFER))
                 .observeOn(AndroidSchedulers.mainThread())
                 .subscribe(didlObject -> didlList.add(new DidlViewModel(didlObject)));
     }
@@ -84,14 +94,18 @@ public class MainViewModel extends BaseObservable {
     }
 
     void cacheCurrentDirectory() {
+        viewController.showLoadingDialog();
         Log.d(TAG, "Cache started");
         String directoryId = objectIdList.get(objectIdList.size() - 1);
         upnpApi.scan(directoryId)
-                .timeout(15, TimeUnit.SECONDS, Flowable.create(e -> Log.d(TAG, "Cache complete"), BackpressureStrategy.BUFFER))
+                .timeout(15, TimeUnit.SECONDS, Flowable.create(e -> {
+                    Log.d(TAG, "Cache complete");
+                    viewController.hideLoadingDialog();
+                }, BackpressureStrategy.BUFFER))
                 .subscribe(didlObject -> {
                     Log.d(TAG, "Added Track to database: " + didlObject.getTitle());
                     appDatabase.trackDao().insert(createTrackObject(didlObject));
-                });
+                }, Crashlytics::logException);
     }
 
 
@@ -114,4 +128,9 @@ public class MainViewModel extends BaseObservable {
         return t;
     }
 
+    public interface ViewController {
+        void showLoadingDialog();
+
+        void hideLoadingDialog();
+    }
 }

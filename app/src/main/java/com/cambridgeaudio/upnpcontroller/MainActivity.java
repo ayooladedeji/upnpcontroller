@@ -1,5 +1,6 @@
 package com.cambridgeaudio.upnpcontroller;
 
+import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.Intent;
 import android.databinding.DataBindingUtil;
@@ -11,14 +12,13 @@ import android.support.v7.app.ActionBarDrawerToggle;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.support.v7.widget.LinearLayoutManager;
-import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.Toast;
 
 import com.cambridgeaudio.upnpcontroller.database.AppDatabase;
-import com.cambridgeaudio.upnpcontroller.database.Track;
+import com.cambridgeaudio.upnpcontroller.dialogs.LoadingDialog;
 import com.cambridgeaudio.upnpcontroller.recyclerbinding.adapter.ClickHandler;
 import com.cambridgeaudio.upnpcontroller.recyclerbinding.adapter.binder.CompositeItemBinder;
 import com.cambridgeaudio.upnpcontroller.recyclerbinding.adapter.binder.ItemBinder;
@@ -26,23 +26,36 @@ import com.cambridgeaudio.upnpcontroller.recyclerbinding.binder.DidlObjectBinder
 import com.cambridgeaudio.upnpcontroller.databinding.ActivityMainBinding;
 import com.cambridgeaudio.upnpcontroller.upnp.UpnpApiImpl;
 
+import com.crashlytics.android.Crashlytics;
+
+import io.fabric.sdk.android.Fabric;
+import io.reactivex.Observable;
+import io.reactivex.Observer;
+
 import org.fourthline.cling.android.AndroidUpnpServiceImpl;
 import org.fourthline.cling.model.meta.Device;
 
-
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+import java.util.concurrent.TimeUnit;
 
 
 public class MainActivity extends AppCompatActivity
-        implements NavigationView.OnNavigationItemSelectedListener {
+        implements NavigationView.OnNavigationItemSelectedListener, MainViewModel.ViewController {
 
     private final String TAG = "MainActivity";
     private MainViewModel mainViewModel;
     private ActivityMainBinding binding;
+    private ProgressDialog loadingDialog;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        mainViewModel = new MainViewModel(new UpnpApiImpl(), AppDatabase.getAppDatabase(this));
+        Fabric.with(this, new Crashlytics());
+        mainViewModel = new MainViewModel(new UpnpApiImpl(), AppDatabase.getAppDatabase(this), this);
 
         binding = DataBindingUtil.setContentView(this, R.layout.activity_main);
         binding.setMainViewModel(mainViewModel);
@@ -67,35 +80,38 @@ public class MainActivity extends AppCompatActivity
         toggle.syncState();
         getMediaServers();
         binding.navView.setNavigationItemSelectedListener(this);
+        loadingDialog = LoadingDialog.create(this, "finding Media Servers", null, false);
+        loadingDialog.show();
+        binding.drawerLayout.openDrawer(GravityCompat.START);
     }
 
     private void getMediaServers() {
         //todo this is not very stable
         Menu menu = binding.navView.getMenu();
-        mainViewModel.getMediaServers().subscribe(list -> {
-                    for (Device mediaServer : list) {
-                        menu.add(mediaServer.getDetails().getFriendlyName());
-//                        ArrayList<String> menuItems = new ArrayList<>();
-//                        for (int x = 0; x < menu.size(); x++) {
-//                            menuItems.add(menu.getItem(x).getTitle().toString());
-//                        }
-//                        if (!menuItems.contains(mediaServer.getDetails().getFriendlyName()))
-//                            menu.add(mediaServer.getDetails().getFriendlyName());
+        Set<String> menuItems = new HashSet<>();
+
+        mainViewModel.testGetMediaServers()
+                .timeout(2, TimeUnit.SECONDS, new Observable<Device>() {
+                    @Override
+                    protected void subscribeActual(Observer<? super Device> observer) {
+                        MainActivity.this.runOnUiThread(() -> {
+                            for (String s : menuItems) {
+                                menu.add(s);
+                            }
+                            loadingDialog.hide();
+                        });
+
                     }
-                },
-                throwable -> Log.e(TAG," " + throwable.getMessage()));
-
-
-
+                })
+                .subscribe(device -> menuItems.add(device.getDetails().getFriendlyName()));
     }
-
 
     @Override
     public void onBackPressed() {
         DrawerLayout drawer = binding.drawerLayout;
         if (drawer.isDrawerOpen(GravityCompat.START)) {
             drawer.closeDrawer(GravityCompat.START);
-        } else if(!mainViewModel.isAtRoot()){
+        } else if (!mainViewModel.isAtRoot()) {
             mainViewModel.goBack();
         } else {
             super.onBackPressed();
@@ -127,6 +143,7 @@ public class MainActivity extends AppCompatActivity
     }
 
     public ClickHandler<DidlViewModel> clickHandler() {
+        loadingDialog = LoadingDialog.create(this, "Fetching items", "", false);
         return didlViewModel -> {
             mainViewModel.browse(didlViewModel.getId());
             Toast.makeText(MainActivity.this, didlViewModel.getTitle(), Toast.LENGTH_SHORT).show();
@@ -139,7 +156,18 @@ public class MainActivity extends AppCompatActivity
     }
 
     public void cacheDirectory(View view) {
+        loadingDialog = LoadingDialog.create(this, "Caching selected directory please wait...", "", false);
         mainViewModel.cacheCurrentDirectory();
     }
 
+
+    @Override
+    public void showLoadingDialog() {
+        loadingDialog.show();
+    }
+
+    @Override
+    public void hideLoadingDialog() {
+        loadingDialog.hide();
+    }
 }

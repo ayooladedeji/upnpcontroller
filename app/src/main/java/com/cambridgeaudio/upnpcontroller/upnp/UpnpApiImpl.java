@@ -52,6 +52,7 @@ public class UpnpApiImpl implements UpnpApi {
 
     //rx objects
     private BehaviorSubject<ArrayList<Device>> mediaServersSubject = BehaviorSubject.create();
+    private BehaviorSubject<Device> testDeviceSubject = BehaviorSubject.create();
 
     private ServiceConnection serviceConnection  = null;
 
@@ -138,6 +139,12 @@ public class UpnpApiImpl implements UpnpApi {
     }
 
 
+    @Override
+    public Observable<Device> testGetMediaServers() {
+        return testDeviceSubject.observeOn(AndroidSchedulers.mainThread());
+    }
+
+
     public Device getSelectedMediaServer() {
         return selectedMediaServer;
     }
@@ -194,7 +201,7 @@ public class UpnpApiImpl implements UpnpApi {
         void deviceAdded(final Device device) {
             if (Objects.equals(device.getType().getType(), "MediaServer")) {
                 Log.d(TAG, "Discovered device: " + device.getDetails().getFriendlyName());
-                mediaServers.removeIf(d -> d.getDetails().getFriendlyName().equals(device.getDetails().getFriendlyName()));
+                testDeviceSubject.onNext(device);
                 mediaServers.add(device);
                 mediaServersSubject.onNext(mediaServers);
             }

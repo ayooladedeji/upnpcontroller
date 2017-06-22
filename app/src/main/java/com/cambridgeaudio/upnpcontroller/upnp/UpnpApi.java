@@ -28,6 +28,9 @@ public interface UpnpApi {
 
     Observable<ArrayList<Device>> getMediaServers();
 
+
+    Observable<Device> testGetMediaServers();
+
     Device getSelectedMediaServer();
 
     void selectMediaServer(Device device);

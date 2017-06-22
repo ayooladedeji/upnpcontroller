@@ -19,6 +19,6 @@ public interface TrackDao {
     @Query("select * from tracks")
     List<Track> getAll();
 
-    @Insert(onConflict = ROLLBACK)
+    @Insert(onConflict = REPLACE)
     void insert(Track... tracks);
 }

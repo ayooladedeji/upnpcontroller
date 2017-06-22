@@ -11,18 +11,24 @@ import android.content.Context;
 
 public class LoadingDialog {
 
-    public static ProgressDialog create(Context context, String title, String message, boolean cancelable) {
+    private static ProgressDialog dialog;
 
-        ProgressDialog loadingDialog = new ProgressDialog(context);
+    public static void show(Context context, String title, String message, boolean cancelable) {
+
+        dialog = new ProgressDialog(context);
         if (title != null)
-            loadingDialog.setTitle(title);
+            dialog.setTitle(title);
         if (message != null)
-            loadingDialog.setMessage(message);
-        loadingDialog.setCancelable(cancelable);
+            dialog.setMessage(message);
+        dialog.setCancelable(cancelable);
 
-        return loadingDialog;
+        dialog.show();
     }
 
+    public static void dismiss() {
+        if (dialog != null)
+            dialog.dismiss();
+    }
 
 
 }

@@ -26,10 +26,9 @@ public interface UpnpApi {
 
     Flowable<DIDLObject> scan(String id);
 
-    Observable<ArrayList<Device>> getMediaServers();
+    Observable<ArrayList<Device>> getMediaServersAsList();
 
-
-    Observable<Device> testGetMediaServers();
+    Observable<Device> getMediaServers();
 
     Device getSelectedMediaServer();
 

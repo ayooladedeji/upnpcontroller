@@ -34,6 +34,7 @@ import io.reactivex.android.schedulers.AndroidSchedulers;
 import io.reactivex.disposables.Disposable;
 import io.reactivex.schedulers.Schedulers;
 import io.reactivex.subjects.BehaviorSubject;
+import io.reactivex.subjects.ReplaySubject;
 
 /**
  * Created by Ayo on 12/06/2017.
@@ -52,7 +53,7 @@ public class UpnpApiImpl implements UpnpApi {
 
     //rx objects
     private BehaviorSubject<ArrayList<Device>> mediaServersSubject = BehaviorSubject.create();
-    private BehaviorSubject<Device> testDeviceSubject = BehaviorSubject.create();
+    private ReplaySubject<Device> testDeviceSubject = ReplaySubject.create();
 
     private ServiceConnection serviceConnection  = null;
 
@@ -134,13 +135,13 @@ public class UpnpApiImpl implements UpnpApi {
     }
 
     @Override
-    public Observable<ArrayList<Device>> getMediaServers() {
+    public Observable<ArrayList<Device>> getMediaServersAsList() {
         return mediaServersSubject.observeOn(AndroidSchedulers.mainThread());
     }
 
 
     @Override
-    public Observable<Device> testGetMediaServers() {
+    public Observable<Device> getMediaServers() {
         return testDeviceSubject.observeOn(AndroidSchedulers.mainThread());
     }
 

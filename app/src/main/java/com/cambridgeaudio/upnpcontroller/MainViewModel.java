@@ -22,9 +22,7 @@ import java.util.concurrent.TimeUnit;
 import io.reactivex.BackpressureStrategy;
 import io.reactivex.Flowable;
 import io.reactivex.Observable;
-import io.reactivex.Observer;
 import io.reactivex.android.schedulers.AndroidSchedulers;
-import io.reactivex.disposables.CompositeDisposable;
 
 /**
  * Created by Ayo on 12/06/2017.
@@ -47,12 +45,13 @@ public class MainViewModel extends BaseObservable {
     }
 
 
-    Observable<ArrayList<Device>> getMediaServers() {
-        return upnpApi.getMediaServers().observeOn(AndroidSchedulers.mainThread());
-    }
 
-    Observable<Device> testGetMediaServers() {
-        return upnpApi.testGetMediaServers().observeOn(AndroidSchedulers.mainThread());
+    Observable<Device> getMediaServers() {
+        viewController.showProgressDialog(null, "Finding servers....");
+        return upnpApi
+                .getMediaServers();
+                //.timeout(1, TimeUnit.SECONDS, Observable.create(e -> viewController.dismissProgressDialog()))
+                //.observeOn(AndroidSchedulers.mainThread());
     }
 
     ServiceConnection getServiceConnection() {
@@ -61,7 +60,8 @@ public class MainViewModel extends BaseObservable {
 
 
     void selectMediaServer(String name) {
-        getMediaServers()
+
+        upnpApi.getMediaServersAsList()
                 .observeOn(AndroidSchedulers.mainThread())
                 .subscribe(devices -> {
                     devices.stream().filter(d -> name.equals(d.getDetails().getFriendlyName())).forEach(d -> upnpApi.selectMediaServer(d));
@@ -94,13 +94,11 @@ public class MainViewModel extends BaseObservable {
     }
 
     void cacheCurrentDirectory() {
-        viewController.showLoadingDialog();
         Log.d(TAG, "Cache started");
         String directoryId = objectIdList.get(objectIdList.size() - 1);
         upnpApi.scan(directoryId)
                 .timeout(15, TimeUnit.SECONDS, Flowable.create(e -> {
                     Log.d(TAG, "Cache complete");
-                    viewController.hideLoadingDialog();
                 }, BackpressureStrategy.BUFFER))
                 .subscribe(didlObject -> {
                     Log.d(TAG, "Added Track to database: " + didlObject.getTitle());
@@ -128,9 +126,8 @@ public class MainViewModel extends BaseObservable {
         return t;
     }
 
-    public interface ViewController {
-        void showLoadingDialog();
-
-        void hideLoadingDialog();
+    public interface ViewController{
+        void showProgressDialog(String title, String message);
+        void dismissProgressDialog();
     }
 }

@@ -1,6 +1,5 @@
 package com.cambridgeaudio.upnpcontroller;
 
-import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.Intent;
 import android.databinding.DataBindingUtil;
@@ -35,10 +34,7 @@ import io.reactivex.Observer;
 import org.fourthline.cling.android.AndroidUpnpServiceImpl;
 import org.fourthline.cling.model.meta.Device;
 
-import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
@@ -49,7 +45,6 @@ public class MainActivity extends AppCompatActivity
     private final String TAG = "MainActivity";
     private MainViewModel mainViewModel;
     private ActivityMainBinding binding;
-    private ProgressDialog loadingDialog;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -80,8 +75,6 @@ public class MainActivity extends AppCompatActivity
         toggle.syncState();
         getMediaServers();
         binding.navView.setNavigationItemSelectedListener(this);
-        loadingDialog = LoadingDialog.create(this, "finding Media Servers", null, false);
-        loadingDialog.show();
         binding.drawerLayout.openDrawer(GravityCompat.START);
     }
 
@@ -90,17 +83,16 @@ public class MainActivity extends AppCompatActivity
         Menu menu = binding.navView.getMenu();
         Set<String> menuItems = new HashSet<>();
 
-        mainViewModel.testGetMediaServers()
-                .timeout(2, TimeUnit.SECONDS, new Observable<Device>() {
+        mainViewModel.getMediaServers()
+                .timeout(3, TimeUnit.SECONDS, new Observable<Device>() {
                     @Override
                     protected void subscribeActual(Observer<? super Device> observer) {
                         MainActivity.this.runOnUiThread(() -> {
                             for (String s : menuItems) {
                                 menu.add(s);
                             }
-                            loadingDialog.hide();
+                            dismissProgressDialog();
                         });
-
                     }
                 })
                 .subscribe(device -> menuItems.add(device.getDetails().getFriendlyName()));
@@ -143,7 +135,6 @@ public class MainActivity extends AppCompatActivity
     }
 
     public ClickHandler<DidlViewModel> clickHandler() {
-        loadingDialog = LoadingDialog.create(this, "Fetching items", "", false);
         return didlViewModel -> {
             mainViewModel.browse(didlViewModel.getId());
             Toast.makeText(MainActivity.this, didlViewModel.getTitle(), Toast.LENGTH_SHORT).show();
@@ -156,18 +147,17 @@ public class MainActivity extends AppCompatActivity
     }
 
     public void cacheDirectory(View view) {
-        loadingDialog = LoadingDialog.create(this, "Caching selected directory please wait...", "", false);
         mainViewModel.cacheCurrentDirectory();
     }
 
 
     @Override
-    public void showLoadingDialog() {
-        loadingDialog.show();
+    public void showProgressDialog(String title, String message) {
+        LoadingDialog.show(this, title, message, false);
     }
 
     @Override
-    public void hideLoadingDialog() {
-        loadingDialog.hide();
+    public void dismissProgressDialog() {
+        LoadingDialog.dismiss();
     }
 }

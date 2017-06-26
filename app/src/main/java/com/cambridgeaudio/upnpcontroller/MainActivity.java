@@ -27,7 +27,6 @@ import com.cambridgeaudio.upnpcontroller.databinding.ActivityMainBinding;
 import com.cambridgeaudio.upnpcontroller.upnp.UpnpApiImpl;
 
 import com.crashlytics.android.Crashlytics;
-import com.testfairy.TestFairy;
 
 import io.fabric.sdk.android.Fabric;
 import io.reactivex.Observable;
@@ -58,7 +57,6 @@ public class MainActivity extends AppCompatActivity
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         Fabric.with(this, new Crashlytics());
-        TestFairy.begin(this, "954899b4fa9853ee516291829c01f72834505b39");
 
         mainViewModel = new MainViewModel(this, new UpnpApiImpl(), AppDatabase.getAppDatabase(this), this);
 

@@ -16,7 +16,6 @@ repositories {
     maven { url 'http://4thline.org/m2' }
     maven { url 'https://maven.fabric.io/public' }
 }
-apply plugin: 'testfairy'
 
 android {
     compileSdkVersion 25
@@ -31,12 +30,6 @@ android {
 
         multiDexEnabled true
 
-
-    }
-
-    testfairyConfig {
-        apiKey "01ee6e2230ce18ba524caec322158658aa0d53cb"
-        autoUpdate true
 
     }
 
@@ -70,7 +63,7 @@ dependencies {
     compile 'com.android.support.constraint:constraint-layout:1.0.2'
     compile "com.android.support:recyclerview-v7:25.4.0"
     compile "com.android.support:design:25.4.0"
-    compile "com.google.guava:guava:21.0"
+    compile "com.google.guava:guava:22.0"
 
     testCompile 'junit:junit:4.12'
 
@@ -95,7 +88,6 @@ dependencies {
     compile 'com.jakewharton.rxrelay2:rxrelay:2.0.0'
     compile 'com.jakewharton.rxbinding2:rxbinding:2.0.0'
     compile 'com.jakewharton.retrofit:retrofit2-rxjava2-adapter:1.0.0'
-    compile 'testfairy:testfairy-android-sdk:1.+@aar'
 
     compile 'com.android.support:multidex:1.0.1'
     compile('com.crashlytics.sdk.android:crashlytics:2.6.8@aar') {

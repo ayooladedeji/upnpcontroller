@@ -203,6 +203,7 @@ public class UpnpApiImpl implements UpnpApi {
             if (Objects.equals(device.getType().getType(), "MediaServer")) {
                 Log.d(TAG, "Discovered device: " + device.getDetails().getFriendlyName());
                 testDeviceSubject.onNext(device);
+
                 mediaServers.add(device);
                 mediaServersSubject.onNext(mediaServers);
             }

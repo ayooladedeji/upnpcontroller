@@ -11,6 +11,7 @@ import android.support.v7.app.ActionBarDrawerToggle;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.support.v7.widget.LinearLayoutManager;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -26,15 +27,21 @@ import com.cambridgeaudio.upnpcontroller.databinding.ActivityMainBinding;
 import com.cambridgeaudio.upnpcontroller.upnp.UpnpApiImpl;
 
 import com.crashlytics.android.Crashlytics;
+import com.testfairy.TestFairy;
 
 import io.fabric.sdk.android.Fabric;
 import io.reactivex.Observable;
 import io.reactivex.Observer;
+import io.reactivex.android.schedulers.AndroidSchedulers;
+import io.reactivex.disposables.CompositeDisposable;
+import io.reactivex.disposables.Disposable;
+import io.reactivex.observers.DisposableSingleObserver;
 
 import org.fourthline.cling.android.AndroidUpnpServiceImpl;
 import org.fourthline.cling.model.meta.Device;
 
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
@@ -45,11 +52,15 @@ public class MainActivity extends AppCompatActivity
     private MainViewModel mainViewModel;
     private ActivityMainBinding binding;
 
+    CompositeDisposable compositeDisposable = new CompositeDisposable();
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         Fabric.with(this, new Crashlytics());
-        mainViewModel = new MainViewModel(new UpnpApiImpl(), AppDatabase.getAppDatabase(this), this);
+        TestFairy.begin(this, "954899b4fa9853ee516291829c01f72834505b39");
+
+        mainViewModel = new MainViewModel(this, new UpnpApiImpl(), AppDatabase.getAppDatabase(this), this);
 
         binding = DataBindingUtil.setContentView(this, R.layout.activity_main);
         binding.setMainViewModel(mainViewModel);
@@ -82,6 +93,7 @@ public class MainActivity extends AppCompatActivity
         Menu menu = binding.navView.getMenu();
         Set<String> menuItems = new HashSet<>();
 
+
         mainViewModel.getMediaServers()
                 .timeout(3, TimeUnit.SECONDS, new Observable<Device>() {
                     @Override
@@ -94,7 +106,9 @@ public class MainActivity extends AppCompatActivity
                         });
                     }
                 })
-                .subscribe(device -> menuItems.add(device.getDetails().getFriendlyName()));
+                .map(device -> device.getDetails().getFriendlyName())
+                .subscribe(menuItems::add);
+
     }
 
     @Override

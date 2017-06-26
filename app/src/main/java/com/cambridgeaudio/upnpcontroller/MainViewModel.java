@@ -1,28 +1,31 @@
 package com.cambridgeaudio.upnpcontroller;
 
+import android.content.Context;
 import android.content.ServiceConnection;
 import android.databinding.BaseObservable;
 import android.databinding.Bindable;
 import android.databinding.ObservableArrayList;
+import android.net.wifi.WifiInfo;
+import android.net.wifi.WifiManager;
+import android.os.Handler;
 import android.util.Log;
 
 import com.cambridgeaudio.upnpcontroller.database.AppDatabase;
-import com.cambridgeaudio.upnpcontroller.database.Track;
+import com.cambridgeaudio.upnpcontroller.database.model.Server;
+import com.cambridgeaudio.upnpcontroller.database.model.Track;
 import com.cambridgeaudio.upnpcontroller.upnp.UpnpApi;
 import com.crashlytics.android.Crashlytics;
 
 import org.fourthline.cling.model.meta.Device;
-import org.fourthline.cling.support.model.DIDLObject;
-import org.fourthline.cling.support.model.item.AudioItem;
-import org.fourthline.cling.support.model.item.MusicTrack;
 
 import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.TimeUnit;
 
-import io.fabric.sdk.android.services.common.Crash;
 import io.reactivex.BackpressureStrategy;
 import io.reactivex.Flowable;
 import io.reactivex.Observable;
+import io.reactivex.Single;
 import io.reactivex.android.schedulers.AndroidSchedulers;
 
 /**
@@ -31,6 +34,7 @@ import io.reactivex.android.schedulers.AndroidSchedulers;
 
 public class MainViewModel extends BaseObservable {
 
+    private Context context;
     private final String TAG = "MainViewModel";
     private UpnpApi upnpApi;
     private AppDatabase appDatabase;
@@ -39,18 +43,24 @@ public class MainViewModel extends BaseObservable {
     @Bindable
     public ObservableArrayList<DidlViewModel> didlList = new ObservableArrayList<>();
 
-    MainViewModel(UpnpApi upnpApi, AppDatabase appDatabase, ViewController viewController) {
+    public MainViewModel(Context context, UpnpApi upnpApi, AppDatabase appDatabase, ViewController viewController) {
+        this.context = context;
         this.upnpApi = upnpApi;
         this.appDatabase = appDatabase;
         this.viewController = viewController;
     }
 
-
-
     Observable<Device> getMediaServers() {
         viewController.showProgressDialog(null, "Finding servers....");
         return upnpApi
                 .getMediaServers();
+    }
+
+    Single<List<String>> getServers() {
+        viewController.showProgressDialog(null, "Finding servers....");
+
+        return upnpApi.getMediaServers().map(device -> device.getDetails().getFriendlyName()).toList();
+
     }
 
     ServiceConnection getServiceConnection() {
@@ -95,43 +105,58 @@ public class MainViewModel extends BaseObservable {
     void cacheCurrentDirectory() {
         viewController.showProgressDialog(null, "Caching directory...");
         Log.d(TAG, "Cache started");
+
+        final boolean[] first = {true};
+        Server server = new Server();
+
         long currentTime = System.currentTimeMillis();
         String directoryId = objectIdList.get(objectIdList.size() - 1);
         upnpApi.scan(directoryId)
                 .timeout(15, TimeUnit.SECONDS, Flowable.create(e -> {
                     Log.d(TAG, "Cache complete");
                     viewController.dismissProgressDialog();
-                    long elapsedTime = System.currentTimeMillis() - currentTime;
-                    Crashlytics.log("Cache time: " + elapsedTime);
+                    long time = TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis() - currentTime);
+
+                    Crashlytics.log("Cache time: " + time + System.lineSeparator() + "Tracks added: " + appDatabase.trackDao().getAll().size());
                 }, BackpressureStrategy.BUFFER))
                 .subscribe(didlObject -> {
+
+                    if (first[0]) {
+                        String serverName = upnpApi.getSelectedMediaServer().getDetails().getFriendlyName();
+                        String serverAddress = upnpApi.getSelectedMediaServer().getDetails().getBaseURL().toString();
+                        server.setName(serverName);
+                        server.setAddress(serverAddress);
+                        server.setWifi(getSSID());
+                        appDatabase.serverDao().insert(server);
+                        Log.d(TAG, "added Server: " + server.toString());
+                        first[0] = false;
+                    }
+
+                    appDatabase.trackDao().insert(Track.create(didlObject, server.getName(), 0, 0));
                     Log.d(TAG, "Added Track to database: " + didlObject.getTitle());
-                    appDatabase.trackDao().insert(createTrackObject(didlObject));
-                }, Crashlytics::logException);
+
+                }, throwable -> {
+                    Log.d(TAG, throwable.getMessage());
+                    Crashlytics.logException(throwable);
+                });
     }
 
 
-    private Track createTrackObject(DIDLObject didlObject) {
-
-        Track t = new Track();
-
-        t.setTrackTitle(didlObject.getTitle() != null ? didlObject.getTitle() : "");
-        t.setGenre(((AudioItem) didlObject).getFirstGenre() != null ? ((AudioItem) didlObject).getFirstGenre() : "");
-        t.setMediaPath(didlObject.getFirstResource().getValue() != null ? didlObject.getFirstResource().getValue() : "");
-
-        if (didlObject instanceof MusicTrack) {
-            t.setAlbum(((MusicTrack) didlObject).getAlbum() != null ? ((MusicTrack) didlObject).getAlbum() : "");
-            t.setArtist(((MusicTrack) didlObject).getFirstArtist().getName() != null ? ((MusicTrack) didlObject).getFirstArtist().getName() : "");
-            t.setGenre(((MusicTrack) didlObject).getFirstGenre() != null ? ((MusicTrack) didlObject).getFirstGenre() : "");
-            t.setTrackNumber(((MusicTrack) didlObject).getOriginalTrackNumber() != null ? ((MusicTrack) didlObject).getOriginalTrackNumber() : 0);
-            t.setDate(((MusicTrack) didlObject).getDate() != null ? ((MusicTrack) didlObject).getDate() : "");
-        }
-
-        return t;
+    //todo handle cases where wifi is not connected?
+    private String getSSID() {
+        WifiManager wifiManager = (WifiManager) context.getSystemService(Context.WIFI_SERVICE);
+        WifiInfo info = wifiManager.getConnectionInfo();
+        return info.getSSID();
     }
 
-    public interface ViewController{
+    //todo
+    private void sendReport(String message) {
+
+    }
+
+    public interface ViewController {
         void showProgressDialog(String title, String message);
+
         void dismissProgressDialog();
     }
 }

@@ -19,11 +19,11 @@
         android:paddingTop="@dimen/nav_header_vertical_spacing"
         app:srcCompat="@android:drawable/sym_def_app_icon" />
 
-    <TextView
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:paddingTop="@dimen/nav_header_vertical_spacing"
-        android:text="@string/media_servers"
-        android:textAppearance="@style/TextAppearance.AppCompat.Body1" />
+    <!--<TextView-->
+        <!--android:layout_width="match_parent"-->
+        <!--android:layout_height="wrap_content"-->
+        <!--android:paddingTop="@dimen/nav_header_vertical_spacing"-->
+        <!--android:text="@string/media_servers"-->
+        <!--android:textAppearance="@style/TextAppearance.AppCompat.Body1" />-->
 
 </LinearLayout>

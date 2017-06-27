@@ -17,6 +17,8 @@ import com.cambridgeaudio.upnpcontroller.database.model.Server;
 import com.cambridgeaudio.upnpcontroller.database.model.Track;
 import com.cambridgeaudio.upnpcontroller.upnp.UpnpApi;
 import com.crashlytics.android.Crashlytics;
+import com.crashlytics.android.answers.Answers;
+import com.crashlytics.android.answers.CustomEvent;
 
 import org.fourthline.cling.model.meta.Device;
 import org.fourthline.cling.support.model.item.MusicTrack;
@@ -63,13 +65,6 @@ public class MainViewModel extends BaseObservable {
         viewController.showProgressDialog(null, "Finding servers....");
         return upnpApi
                 .getMediaServers();
-    }
-
-    Single<List<String>> getServers() {
-        viewController.showProgressDialog(null, "Finding servers....");
-
-        return upnpApi.getMediaServers().map(device -> device.getDetails().getFriendlyName()).toList();
-
     }
 
     ServiceConnection getServiceConnection() {
@@ -131,17 +126,13 @@ public class MainViewModel extends BaseObservable {
         String directoryId = objectIdList.get(objectIdList.size() - 1);
         viewController.showProgressDialog(null, "Caching directory...");
         Log.d(TAG, "Cache started");
-
-
+        final int[] counter = {0};
         addServer();
-
-
         upnpApi.scan(directoryId)
                 .timeout(15, TimeUnit.SECONDS, Flowable.create(e -> {
                     Log.d(TAG, "Cache complete");
                     viewController.dismissProgressDialog();
-                    long time = TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis() - currentTime);
-                    Crashlytics.log("Cache time: " + time + System.lineSeparator() + "Tracks added: " + appDatabase.trackDao().getAll().size());
+                    sendReport(System.currentTimeMillis() - currentTime, counter[0]);
                 }, BackpressureStrategy.BUFFER))
                 .subscribe(didlObject -> {
 
@@ -162,6 +153,7 @@ public class MainViewModel extends BaseObservable {
 
                     appDatabase.trackDao().insert(Track.create(didlObject, upnpApi.getSelectedMediaServer().getDetails().getFriendlyName(), albumId, artistId));
                     Log.d(TAG, "Added Track to database: " + didlObject.getTitle());
+                    counter[0]++;
 
                 }, throwable -> {
                     Log.d(TAG, throwable.getMessage());
@@ -178,11 +170,16 @@ public class MainViewModel extends BaseObservable {
     }
 
     //todo
-    private void sendReport(String message) {
+    private void sendReport(long duration, int tracksScanned) {
+        Disposable d =
+                Observable.create(e -> Answers.getInstance().logCustom(new CustomEvent("Cache Report")
+                        .putCustomAttribute("Tracks scanned", tracksScanned)
+                        .putCustomAttribute("Time elapsed", TimeUnit.MILLISECONDS.toSeconds(duration)))).subscribeOn(Schedulers.io()).subscribe();
+        compositeDisposable.add(d);
 
     }
 
-    public void onDestroy(){
+    public void onDestroy() {
         compositeDisposable.dispose();
     }
 

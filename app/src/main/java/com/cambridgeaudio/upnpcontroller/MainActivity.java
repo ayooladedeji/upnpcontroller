@@ -13,7 +13,9 @@ import android.os.Bundle;
 import android.support.v7.widget.LinearLayoutManager;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.SubMenu;
 import android.view.View;
+import android.widget.Switch;
 import android.widget.Toast;
 
 import com.cambridgeaudio.upnpcontroller.database.AppDatabase;
@@ -30,7 +32,6 @@ import com.crashlytics.android.Crashlytics;
 import io.fabric.sdk.android.Fabric;
 import io.reactivex.Observable;
 import io.reactivex.Observer;
-import io.reactivex.disposables.CompositeDisposable;
 
 import org.fourthline.cling.android.AndroidUpnpServiceImpl;
 import org.fourthline.cling.model.meta.Device;
@@ -45,8 +46,6 @@ public class MainActivity extends AppCompatActivity
     private final String TAG = "MainActivity";
     private MainViewModel mainViewModel;
     private ActivityMainBinding binding;
-
-    CompositeDisposable compositeDisposable = new CompositeDisposable();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -86,14 +85,15 @@ public class MainActivity extends AppCompatActivity
         Menu menu = binding.navView.getMenu();
         Set<String> menuItems = new HashSet<>();
 
-
+        menu.add("Browse");
+        SubMenu subMenu = menu.addSubMenu(0, 1, Menu.NONE, "Media Servers");
         mainViewModel.getMediaServers()
                 .timeout(3, TimeUnit.SECONDS, new Observable<Device>() {
                     @Override
                     protected void subscribeActual(Observer<? super Device> observer) {
                         MainActivity.this.runOnUiThread(() -> {
                             for (String s : menuItems) {
-                                menu.add(s);
+                                subMenu.add(s);
                             }
                             dismissProgressDialog();
                         });
@@ -134,7 +134,15 @@ public class MainActivity extends AppCompatActivity
 
     @Override
     public boolean onNavigationItemSelected(@NonNull MenuItem item) {
-        mainViewModel.selectMediaServer(item.getTitle().toString());
+        String itemClicked = item.getTitle().toString();
+        switch(itemClicked) {
+            case "Browse":
+                Toast.makeText(this, "Clicked browse", Toast.LENGTH_SHORT).show();
+                break;
+            default:
+                mainViewModel.selectMediaServer(item.getTitle().toString());
+                break;
+        }
         DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
         drawer.closeDrawer(GravityCompat.START);
         return true;

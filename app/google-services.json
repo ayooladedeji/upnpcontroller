@@ -1,0 +1,55 @@
+{
+  "project_info": {
+    "project_number": "211449446441",
+    "firebase_url": "https://upnpcontroller.firebaseio.com",
+    "project_id": "upnpcontroller",
+    "storage_bucket": "upnpcontroller.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:211449446441:android:b43a0fd65711d95f",
+        "android_client_info": {
+          "package_name": "com.cambridgeaudio.upnpcontroller"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "211449446441-6m3ikjrpesq1dvafn720v6uoo5d9m4fe.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.cambridgeaudio.upnpcontroller",
+            "certificate_hash": "dcfc4872a79e4d80c5055ce2672871fabaa323e8"
+          }
+        },
+        {
+          "client_id": "211449446441-p06brqgn6f0h3rcb4p304j1kdl991ami.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyA9K8oJcyZ3lPchlPF_yLC6KXzDYtpJLYM"
+        }
+      ],
+      "services": {
+        "analytics_service": {
+          "status": 1
+        },
+        "appinvite_service": {
+          "status": 2,
+          "other_platform_oauth_client": [
+            {
+              "client_id": "211449446441-p06brqgn6f0h3rcb4p304j1kdl991ami.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        },
+        "ads_service": {
+          "status": 2
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

@@ -1,4 +1,4 @@
-package com.cambridgeaudio.upnpcontroller;
+package com.cambridgeaudio.upnpcontroller.viewmodels.itemviews;
 
 import android.databinding.BaseObservable;
 

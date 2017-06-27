@@ -1,4 +1,4 @@
-package com.cambridgeaudio.upnpcontroller;
+package com.cambridgeaudio.upnpcontroller.activities;
 
 import android.content.Context;
 import android.content.Intent;
@@ -15,11 +15,13 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.SubMenu;
 import android.view.View;
-import android.widget.Switch;
 import android.widget.Toast;
 
+import com.cambridgeaudio.upnpcontroller.R;
 import com.cambridgeaudio.upnpcontroller.database.AppDatabase;
 import com.cambridgeaudio.upnpcontroller.dialogs.LoadingDialog;
+import com.cambridgeaudio.upnpcontroller.viewmodels.MainViewModel;
+import com.cambridgeaudio.upnpcontroller.viewmodels.itemviews.DidlViewModel;
 import com.cambridgeaudio.upnpcontroller.recyclerbinding.adapter.ClickHandler;
 import com.cambridgeaudio.upnpcontroller.recyclerbinding.adapter.binder.CompositeItemBinder;
 import com.cambridgeaudio.upnpcontroller.recyclerbinding.adapter.binder.ItemBinder;

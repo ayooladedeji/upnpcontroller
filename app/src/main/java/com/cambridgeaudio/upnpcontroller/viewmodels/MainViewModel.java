@@ -1,4 +1,4 @@
-package com.cambridgeaudio.upnpcontroller;
+package com.cambridgeaudio.upnpcontroller.viewmodels;
 
 import android.content.Context;
 import android.content.ServiceConnection;
@@ -7,7 +7,6 @@ import android.databinding.Bindable;
 import android.databinding.ObservableArrayList;
 import android.net.wifi.WifiInfo;
 import android.net.wifi.WifiManager;
-import android.os.Handler;
 import android.util.Log;
 
 import com.cambridgeaudio.upnpcontroller.database.AppDatabase;
@@ -15,6 +14,7 @@ import com.cambridgeaudio.upnpcontroller.database.model.Album;
 import com.cambridgeaudio.upnpcontroller.database.model.Artist;
 import com.cambridgeaudio.upnpcontroller.database.model.Server;
 import com.cambridgeaudio.upnpcontroller.database.model.Track;
+import com.cambridgeaudio.upnpcontroller.viewmodels.itemviews.DidlViewModel;
 import com.cambridgeaudio.upnpcontroller.upnp.UpnpApi;
 import com.crashlytics.android.Crashlytics;
 import com.crashlytics.android.answers.Answers;
@@ -24,15 +24,11 @@ import org.fourthline.cling.model.meta.Device;
 import org.fourthline.cling.support.model.item.MusicTrack;
 
 import java.util.ArrayList;
-import java.util.List;
 import java.util.concurrent.TimeUnit;
 
-import hu.akarnokd.rxjava2.async.DisposableFlowable;
 import io.reactivex.BackpressureStrategy;
 import io.reactivex.Flowable;
 import io.reactivex.Observable;
-import io.reactivex.Scheduler;
-import io.reactivex.Single;
 import io.reactivex.android.schedulers.AndroidSchedulers;
 import io.reactivex.disposables.CompositeDisposable;
 import io.reactivex.disposables.Disposable;

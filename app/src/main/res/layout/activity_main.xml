@@ -7,11 +7,11 @@
 
         <variable
             name="mainViewModel"
-            type="com.cambridgeaudio.upnpcontroller.MainViewModel" />
+            type="com.cambridgeaudio.upnpcontroller.viewmodels.MainViewModel" />
 
         <variable
             name="view"
-            type="com.cambridgeaudio.upnpcontroller.MainActivity" />
+            type="com.cambridgeaudio.upnpcontroller.activities.MainActivity" />
     </data>
 
     <android.support.v4.widget.DrawerLayout xmlns:tools="http://schemas.android.com/tools"
@@ -19,7 +19,7 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:fitsSystemWindows="true"
-        tools:context="com.cambridgeaudio.upnpcontroller.MainActivity"
+        tools:context="com.cambridgeaudio.upnpcontroller.activities.MainActivity"
         tools:openDrawer="start">
 
         <RelativeLayout

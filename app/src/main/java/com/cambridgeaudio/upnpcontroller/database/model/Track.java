@@ -11,6 +11,8 @@ import org.fourthline.cling.support.model.DIDLObject;
 import org.fourthline.cling.support.model.item.AudioItem;
 import org.fourthline.cling.support.model.item.MusicTrack;
 
+import static android.arch.persistence.room.ForeignKey.CASCADE;
+
 /**
  * Created by Ayo on 01/06/2017.
  */
@@ -19,15 +21,21 @@ import org.fourthline.cling.support.model.item.MusicTrack;
         foreignKeys = {
                 @ForeignKey(entity = Artist.class,
                         parentColumns = "id",
-                        childColumns = "artist_id"),
+                        childColumns = "artist_id",
+                        onDelete = CASCADE,
+                        onUpdate = CASCADE),
                 @ForeignKey(entity = Album.class,
                         parentColumns = "id",
-                        childColumns = "album_id"),
+                        childColumns = "album_id",
+                        onDelete = CASCADE,
+                        onUpdate = CASCADE),
                 @ForeignKey(entity = Server.class,
                         parentColumns = "name",
-                        childColumns = "server_name")
+                        childColumns = "server_name",
+                        onDelete = CASCADE,
+                        onUpdate = CASCADE)
         },
-        indices = {@Index(value ="media_path", unique = true)}
+        indices = {@Index(value = "media_path", unique = true)}
 )
 public class Track {
 
@@ -60,16 +68,22 @@ public class Track {
     private String parentId;
 
     @ColumnInfo(name = "artist_id")
-    private int artistId;
+    private long artistId;
 
     @ColumnInfo(name = "album_id")
-    private int albumId;
+    private long albumId;
 
     @ColumnInfo(name = "server_name")
     private String serverName;
 
 
-    public static Track create(DIDLObject didlObject, String serverName, int albumId, int artistId){
+    private static String createMediaPath(String s){
+        String regex = "http?://\\b\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}\\b:\\d{1,4}/";
+        String[] parts = s.split(regex);
+        return parts[1];
+    }
+
+    public static Track create(DIDLObject didlObject, String serverName, long albumId, long artistId) {
         Track t = new Track();
 
         t.setServerName(serverName);
@@ -80,7 +94,7 @@ public class Track {
         t.setTrackTitle(didlObject.getTitle() != null ? didlObject.getTitle() : "");
         t.setGenre(((AudioItem) didlObject).getFirstGenre() != null ? ((AudioItem) didlObject).getFirstGenre() : "");
         t.setDuration(didlObject.getFirstResource().getDuration());
-        t.setMediaPath(didlObject.getFirstResource().getValue() != null ? didlObject.getFirstResource().getValue() : "");
+        t.setMediaPath(didlObject.getFirstResource().getValue() != null ? createMediaPath(didlObject.getFirstResource().getValue()) : "");
 
         if (didlObject instanceof MusicTrack) {
             t.setGenre(((MusicTrack) didlObject).getFirstGenre() != null ? ((MusicTrack) didlObject).getFirstGenre() : "");
@@ -163,19 +177,19 @@ public class Track {
         this.parentId = parentId;
     }
 
-    public int getArtistId() {
+    public long getArtistId() {
         return artistId;
     }
 
-    public void setArtistId(int artistId) {
+    public void setArtistId(long artistId) {
         this.artistId = artistId;
     }
 
-    public int getAlbumId() {
+    public long getAlbumId() {
         return albumId;
     }
 
-    public void setAlbumId(int albumId) {
+    public void setAlbumId(long albumId) {
         this.albumId = albumId;
     }
 

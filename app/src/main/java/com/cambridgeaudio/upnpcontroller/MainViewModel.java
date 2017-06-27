@@ -11,22 +11,30 @@ import android.os.Handler;
 import android.util.Log;
 
 import com.cambridgeaudio.upnpcontroller.database.AppDatabase;
+import com.cambridgeaudio.upnpcontroller.database.model.Album;
+import com.cambridgeaudio.upnpcontroller.database.model.Artist;
 import com.cambridgeaudio.upnpcontroller.database.model.Server;
 import com.cambridgeaudio.upnpcontroller.database.model.Track;
 import com.cambridgeaudio.upnpcontroller.upnp.UpnpApi;
 import com.crashlytics.android.Crashlytics;
 
 import org.fourthline.cling.model.meta.Device;
+import org.fourthline.cling.support.model.item.MusicTrack;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
+import hu.akarnokd.rxjava2.async.DisposableFlowable;
 import io.reactivex.BackpressureStrategy;
 import io.reactivex.Flowable;
 import io.reactivex.Observable;
+import io.reactivex.Scheduler;
 import io.reactivex.Single;
 import io.reactivex.android.schedulers.AndroidSchedulers;
+import io.reactivex.disposables.CompositeDisposable;
+import io.reactivex.disposables.Disposable;
+import io.reactivex.schedulers.Schedulers;
 
 /**
  * Created by Ayo on 12/06/2017.
@@ -40,6 +48,7 @@ public class MainViewModel extends BaseObservable {
     private AppDatabase appDatabase;
     private ArrayList<String> objectIdList = new ArrayList<>();
     private ViewController viewController;
+    private CompositeDisposable compositeDisposable = new CompositeDisposable();
     @Bindable
     public ObservableArrayList<DidlViewModel> didlList = new ObservableArrayList<>();
 
@@ -102,37 +111,56 @@ public class MainViewModel extends BaseObservable {
         return objectIdList.size() == 1;
     }
 
+    private void addServer() {
+        Disposable d =
+                Observable.create(e -> {
+                    Server server = new Server();
+                    String serverName = upnpApi.getSelectedMediaServer().getDetails().getFriendlyName();
+                    String serverAddress = upnpApi.getSelectedMediaServer().getDetails().getPresentationURI().toString();
+                    server.setName(serverName);
+                    server.setAddress(serverAddress);
+                    server.setWifi(getSSID());
+                    appDatabase.serverDao().insert(server);
+                    Log.d(TAG, "added Server: " + server.getName());
+                }).subscribeOn(Schedulers.io()).subscribe();
+        compositeDisposable.add(d);
+    }
+
     void cacheCurrentDirectory() {
+        long currentTime = System.currentTimeMillis();
+        String directoryId = objectIdList.get(objectIdList.size() - 1);
         viewController.showProgressDialog(null, "Caching directory...");
         Log.d(TAG, "Cache started");
 
-        final boolean[] first = {true};
-        Server server = new Server();
 
-        long currentTime = System.currentTimeMillis();
-        String directoryId = objectIdList.get(objectIdList.size() - 1);
+        addServer();
+
+
         upnpApi.scan(directoryId)
                 .timeout(15, TimeUnit.SECONDS, Flowable.create(e -> {
                     Log.d(TAG, "Cache complete");
                     viewController.dismissProgressDialog();
                     long time = TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis() - currentTime);
-
                     Crashlytics.log("Cache time: " + time + System.lineSeparator() + "Tracks added: " + appDatabase.trackDao().getAll().size());
                 }, BackpressureStrategy.BUFFER))
                 .subscribe(didlObject -> {
 
-                    if (first[0]) {
-                        String serverName = upnpApi.getSelectedMediaServer().getDetails().getFriendlyName();
-                        String serverAddress = upnpApi.getSelectedMediaServer().getDetails().getBaseURL().toString();
-                        server.setName(serverName);
-                        server.setAddress(serverAddress);
-                        server.setWifi(getSSID());
-                        appDatabase.serverDao().insert(server);
-                        Log.d(TAG, "added Server: " + server.toString());
-                        first[0] = false;
+                    Log.d(TAG, "didlObject isntance of" + (didlObject instanceof MusicTrack ? "MusicTrack" : "AudioItem"));
+
+                    long albumId, artistId;
+                    albumId = artistId = -1L;
+
+                    if (didlObject instanceof MusicTrack) {
+                        artistId = appDatabase.artistDao().insert(new Artist(((MusicTrack) didlObject).getFirstArtist().getName()))[0];
+                        Log.d(TAG, "Added Artist to database: " + ((MusicTrack) didlObject).getFirstArtist().getName());
+
+                        if (((MusicTrack) didlObject).getAlbum() != null) {
+                            albumId = appDatabase.albumDao().insert(new Album(((MusicTrack) didlObject).getAlbum(), artistId))[0];
+                            Log.d(TAG, "Added Album to database: " + ((MusicTrack) didlObject).getAlbum());
+                        }
                     }
 
-                    appDatabase.trackDao().insert(Track.create(didlObject, server.getName(), 0, 0));
+                    appDatabase.trackDao().insert(Track.create(didlObject, upnpApi.getSelectedMediaServer().getDetails().getFriendlyName(), albumId, artistId));
                     Log.d(TAG, "Added Track to database: " + didlObject.getTitle());
 
                 }, throwable -> {
@@ -152,6 +180,10 @@ public class MainViewModel extends BaseObservable {
     //todo
     private void sendReport(String message) {
 
+    }
+
+    public void onDestroy(){
+        compositeDisposable.dispose();
     }
 
     public interface ViewController {

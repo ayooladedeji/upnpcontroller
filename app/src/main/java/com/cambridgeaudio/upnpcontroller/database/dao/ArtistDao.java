@@ -40,6 +40,6 @@ public interface ArtistDao {
     Artist getById(int id);
 
     @Insert(onConflict = REPLACE)
-    void insert(Artist... artists);
+    long[] insert(Artist... artists);
 
 }

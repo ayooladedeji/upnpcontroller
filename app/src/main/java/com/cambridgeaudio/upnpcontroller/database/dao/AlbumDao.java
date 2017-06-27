@@ -34,6 +34,6 @@ public interface AlbumDao {
     Album getById(int id);
 
     @Insert(onConflict = REPLACE)
-    void insert(Album... albums);
+    long[] insert(Album... albums);
 
 }

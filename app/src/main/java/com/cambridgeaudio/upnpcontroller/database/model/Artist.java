@@ -13,7 +13,7 @@ import android.arch.persistence.room.PrimaryKey;
 public class Artist {
 
     @PrimaryKey(autoGenerate = true)
-    private int id;
+    private long id;
 
     @ColumnInfo(name = "name")
     private String name;
@@ -22,11 +22,11 @@ public class Artist {
         this.name = name;
     }
 
-    public int getId() {
+    public long getId() {
         return id;
     }
 
-    public void setId(int id) {
+    public void setId(long id) {
         this.id = id;
     }
 

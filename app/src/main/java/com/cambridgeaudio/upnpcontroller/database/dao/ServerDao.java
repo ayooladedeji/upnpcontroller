@@ -19,7 +19,7 @@ import static android.arch.persistence.room.OnConflictStrategy.REPLACE;
 public interface ServerDao {
 
     @Insert(onConflict = REPLACE)
-    void insert(Server... servers);
+    long[] insert(Server... servers);
 
     @Query("select * from servers where name =:name")
     Server getByName(String name);

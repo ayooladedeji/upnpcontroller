@@ -5,6 +5,8 @@ import android.arch.persistence.room.Entity;
 import android.arch.persistence.room.ForeignKey;
 import android.arch.persistence.room.PrimaryKey;
 
+import static android.arch.persistence.room.ForeignKey.CASCADE;
+
 /**
  * Created by Ayo on 26/06/2017.
  */
@@ -13,37 +15,38 @@ import android.arch.persistence.room.PrimaryKey;
         foreignKeys =
         @ForeignKey(entity = Artist.class,
                 parentColumns = "id",
-                childColumns = "artist_id"))
+                childColumns = "artist_id",
+                onDelete = CASCADE,
+                onUpdate = CASCADE))
 public class Album {
 
     @PrimaryKey(autoGenerate = true)
-    private int id;
+    private long id;
 
     @ColumnInfo(name = "title")
     private String title;
 
     @ColumnInfo(name = "artist_id")
-    private int artistId;
+    private long artistId;
 
-    public Album(int id, String title, int artistId) {
-        this.id = id;
+    public Album(String title, long artistId) {
         this.title = title;
         this.artistId = artistId;
     }
 
-    public int getId() {
+    public long getId() {
         return id;
     }
 
-    public void setId(int id) {
+    public void setId(long id) {
         this.id = id;
     }
 
-    public int getArtistId() {
+    public long getArtistId() {
         return artistId;
     }
 
-    public void setArtistId(int artistId) {
+    public void setArtistId(long artistId) {
         this.artistId = artistId;
     }
 

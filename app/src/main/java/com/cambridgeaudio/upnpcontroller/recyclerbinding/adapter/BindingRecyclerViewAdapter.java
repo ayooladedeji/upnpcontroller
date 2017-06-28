@@ -23,6 +23,7 @@ public class BindingRecyclerViewAdapter<T> extends RecyclerView.Adapter<BindingR
     private ObservableList<T> items;
     private LayoutInflater inflater;
     private ClickHandler<T> clickHandler;
+    private static boolean onBind;
 
     public BindingRecyclerViewAdapter(ItemBinder<T> itemBinder, @Nullable Collection<T> items) {
         this.itemBinder = itemBinder;
@@ -76,11 +77,13 @@ public class BindingRecyclerViewAdapter<T> extends RecyclerView.Adapter<BindingR
 
     @Override
     public void onBindViewHolder(ViewHolder viewHolder, int position) {
+        onBind = true;
         final T item = items.get(position);
         viewHolder.binding.setVariable(itemBinder.getBindingVariable(item), item);
         viewHolder.binding.getRoot().setTag(ITEM_MODEL, item);
         viewHolder.binding.getRoot().setOnClickListener(this);
         viewHolder.binding.executePendingBindings();
+        onBind = false;
     }
 
     @Override
@@ -138,7 +141,7 @@ public class BindingRecyclerViewAdapter<T> extends RecyclerView.Adapter<BindingR
         @Override
         public void onItemRangeInserted(ObservableList sender, int positionStart, int itemCount) {
             RecyclerView.Adapter adapter = adapterReference.get();
-            if (adapter != null) {
+            if (adapter != null && !onBind) {
 
                 adapter.notifyItemRangeInserted(positionStart, itemCount);
             }

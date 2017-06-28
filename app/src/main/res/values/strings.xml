@@ -5,4 +5,7 @@
     <string name="action_settings">Settings</string>
     <string name="media_servers">Media servers</string>
     <string name="search_music">Search music...</string>
+    <string name="tracks">TRACKS</string>
+    <string name="albums">ALBUMS</string>
+    <string name="artists">ARTISTS</string>
 </resources>

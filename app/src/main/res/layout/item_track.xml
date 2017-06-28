@@ -4,8 +4,8 @@
     <data>
 
         <variable
-            name="didl"
-            type="com.cambridgeaudio.upnpcontroller.viewmodels.itemviews.DidlViewModel" />
+            name="track"
+            type="com.cambridgeaudio.upnpcontroller.viewmodels.itemviews.TrackViewModel" />
     </data>
 
     <LinearLayout
@@ -19,7 +19,7 @@
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:text="@{didl.title}" />
+            android:text="@{track.title}" />
 
     </LinearLayout>
 </layout>

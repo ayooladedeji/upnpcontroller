@@ -4,8 +4,8 @@
     <data>
 
         <variable
-            name="didl"
-            type="com.cambridgeaudio.upnpcontroller.viewmodels.itemviews.DidlViewModel" />
+            name="album"
+            type="com.cambridgeaudio.upnpcontroller.viewmodels.itemviews.AlbumViewModel" />
     </data>
 
     <LinearLayout
@@ -15,11 +15,12 @@
         android:orientation="horizontal">
 
         <TextView
-            android:id="@+id/didl_item_title"
+            android:id="@+id/album_item_title"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:text="@{didl.title}" />
+            android:text="@{album.title}"
+             />
 
     </LinearLayout>
 </layout>

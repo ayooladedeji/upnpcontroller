@@ -67,11 +67,11 @@ dependencies {
     compile "com.android.support:recyclerview-v7:25.4.0"
     compile "com.android.support:design:25.4.0"
     compile "com.google.guava:guava:22.0"
-
     testCompile 'junit:junit:4.12'
 
     //room database
     compile 'android.arch.persistence.room:runtime:' + rootProject.archRoomVersion;
+    compile 'android.arch.persistence.room:rxjava2:' + rootProject.archRoomVersion;
     annotationProcessor 'android.arch.persistence.room:compiler:' + rootProject.archRoomVersion;
 
     // Cling

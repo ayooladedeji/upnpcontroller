@@ -57,18 +57,18 @@ public class MainViewModel extends BaseObservable {
         this.viewController = viewController;
     }
 
-    Observable<Device> getMediaServers() {
+    public Observable<Device> getMediaServers() {
         viewController.showProgressDialog(null, "Finding servers....");
         return upnpApi
                 .getMediaServers();
     }
 
-    ServiceConnection getServiceConnection() {
+    public ServiceConnection getServiceConnection() {
         return upnpApi.getServiceConnection();
     }
 
 
-    void selectMediaServer(String name) {
+    public void selectMediaServer(String name) {
 
         upnpApi.getMediaServersAsList()
                 .observeOn(AndroidSchedulers.mainThread())
@@ -79,7 +79,7 @@ public class MainViewModel extends BaseObservable {
 
     }
 
-    void browse(String id) {
+    public void browse(String id) {
         viewController.showProgressDialog(null, "loading directory...");
         objectIdList.add(id);
         this.didlList.clear();
@@ -91,14 +91,14 @@ public class MainViewModel extends BaseObservable {
                 .subscribe(didlObject -> didlList.add(new DidlViewModel(didlObject)));
     }
 
-    void goBack() {
+    public void goBack() {
         if (objectIdList.size() > 1) {
             objectIdList.remove(objectIdList.size() - 1);
             browse(objectIdList.get(objectIdList.size() - 1));
         }
     }
 
-    boolean isAtRoot() {
+    public boolean isAtRoot() {
         return objectIdList.size() == 1;
     }
 
@@ -117,7 +117,7 @@ public class MainViewModel extends BaseObservable {
         compositeDisposable.add(d);
     }
 
-    void cacheCurrentDirectory() {
+    public void cacheCurrentDirectory() {
         long currentTime = System.currentTimeMillis();
         String directoryId = objectIdList.get(objectIdList.size() - 1);
         viewController.showProgressDialog(null, "Caching directory...");

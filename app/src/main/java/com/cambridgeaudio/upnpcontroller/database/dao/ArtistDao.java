@@ -9,6 +9,8 @@ import com.cambridgeaudio.upnpcontroller.database.model.relations.ArtistWithTrac
 
 import java.util.List;
 
+import io.reactivex.Flowable;
+
 import static android.arch.persistence.room.OnConflictStrategy.REPLACE;
 
 /**
@@ -19,22 +21,22 @@ import static android.arch.persistence.room.OnConflictStrategy.REPLACE;
 public interface ArtistDao {
 
     @Query("select  * from artists where name = :name")
-    List<ArtistWithTracks> getTracksByName(String name);
+    Flowable<ArtistWithTracks> getTracksByName(String name);
 
     @Query("select  * from artists where id = :id")
-    List<ArtistWithTracks> getTracksById(int id);
+    Flowable<ArtistWithTracks> getTracksById(int id);
 
     @Query("select  * from artists where id = :id")
-    List<ArtistWithAlbums> getAlbumsById(int id);
+    Flowable<ArtistWithAlbums> getAlbumsById(int id);
 
     @Query("select  * from artists where name = :name")
-    List<ArtistWithAlbums> getAlbumsName(String name);
+    Flowable<ArtistWithAlbums> getAlbumsName(String name);
 
     @Query("select * from artists")
-    List<Artist> getAll();
+    Flowable<Artist> getAll();
 
     @Query("select * from artists where name =:name")
-    List<Artist> getByName(String name);
+    Flowable<Artist> getByName(String name);
 
     @Query("select * from artists where id =:id")
     Artist getById(int id);

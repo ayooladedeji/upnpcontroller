@@ -17,25 +17,25 @@ import static android.arch.persistence.room.ForeignKey.CASCADE;
  * Created by Ayo on 01/06/2017.
  */
 
-@Entity(tableName = "tracks",
-        foreignKeys = {
-                @ForeignKey(entity = Artist.class,
-                        parentColumns = "id",
-                        childColumns = "artist_id",
-                        onDelete = CASCADE,
-                        onUpdate = CASCADE),
-                @ForeignKey(entity = Album.class,
-                        parentColumns = "id",
-                        childColumns = "album_id",
-                        onDelete = CASCADE,
-                        onUpdate = CASCADE),
-                @ForeignKey(entity = Server.class,
-                        parentColumns = "name",
-                        childColumns = "server_name",
-                        onDelete = CASCADE,
-                        onUpdate = CASCADE)
-        },
-        indices = {@Index(value = "media_path", unique = true)}
+@Entity(tableName = "tracks"//,
+//        foreignKeys = {
+//                @ForeignKey(entity = Artist.class,
+//                        parentColumns = "id",
+//                        childColumns = "artist_id",
+//                        onDelete = CASCADE,
+//                        onUpdate = CASCADE),
+//                @ForeignKey(entity = Album.class,
+//                        parentColumns = "id",
+//                        childColumns = "album_id",
+//                        onDelete = CASCADE,
+//                        onUpdate = CASCADE),
+//                @ForeignKey(entity = Server.class,
+//                        parentColumns = "name",
+//                        childColumns = "server_name",
+//                        onDelete = CASCADE,
+//                        onUpdate = CASCADE)
+//        },
+//        indices = {@Index(value = "media_path", unique = true), @Index(value = {"artist_id", "album_id", "server_name"}, unique = true)}
 )
 public class Track {
 

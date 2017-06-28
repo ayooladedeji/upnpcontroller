@@ -17,8 +17,10 @@ import android.view.SubMenu;
 import android.view.View;
 import android.widget.Toast;
 
+import com.cambridgeaudio.upnpcontroller.Application;
 import com.cambridgeaudio.upnpcontroller.R;
 import com.cambridgeaudio.upnpcontroller.database.AppDatabase;
+import com.cambridgeaudio.upnpcontroller.databinding.ActivityMainBinding;
 import com.cambridgeaudio.upnpcontroller.dialogs.LoadingDialog;
 import com.cambridgeaudio.upnpcontroller.viewmodels.MainViewModel;
 import com.cambridgeaudio.upnpcontroller.viewmodels.itemviews.DidlViewModel;
@@ -26,7 +28,6 @@ import com.cambridgeaudio.upnpcontroller.recyclerbinding.adapter.ClickHandler;
 import com.cambridgeaudio.upnpcontroller.recyclerbinding.adapter.binder.CompositeItemBinder;
 import com.cambridgeaudio.upnpcontroller.recyclerbinding.adapter.binder.ItemBinder;
 import com.cambridgeaudio.upnpcontroller.recyclerbinding.binder.DidlObjectBinder;
-import com.cambridgeaudio.upnpcontroller.databinding.ActivityMainBinding;
 import com.cambridgeaudio.upnpcontroller.upnp.UpnpApiImpl;
 
 import com.crashlytics.android.Crashlytics;
@@ -35,6 +36,7 @@ import io.fabric.sdk.android.Fabric;
 import io.reactivex.Observable;
 import io.reactivex.Observer;
 
+import org.fourthline.cling.Main;
 import org.fourthline.cling.android.AndroidUpnpServiceImpl;
 import org.fourthline.cling.model.meta.Device;
 
@@ -45,7 +47,6 @@ import java.util.concurrent.TimeUnit;
 public class MainActivity extends AppCompatActivity
         implements NavigationView.OnNavigationItemSelectedListener, MainViewModel.ViewController {
 
-    private final String TAG = "MainActivity";
     private MainViewModel mainViewModel;
     private ActivityMainBinding binding;
 
@@ -54,7 +55,12 @@ public class MainActivity extends AppCompatActivity
         super.onCreate(savedInstanceState);
         Fabric.with(this, new Crashlytics());
 
-        mainViewModel = new MainViewModel(this, new UpnpApiImpl(), AppDatabase.getAppDatabase(this), this);
+        mainViewModel =
+                new MainViewModel(
+                        this,
+                        ((Application) this.getApplication()).getUpnpApi(),
+                        ((Application) this.getApplication()).getAppDatabase(),
+                        this);
 
         binding = DataBindingUtil.setContentView(this, R.layout.activity_main);
         binding.setMainViewModel(mainViewModel);
@@ -139,7 +145,7 @@ public class MainActivity extends AppCompatActivity
         String itemClicked = item.getTitle().toString();
         switch(itemClicked) {
             case "Browse":
-                Toast.makeText(this, "Clicked browse", Toast.LENGTH_SHORT).show();
+                MainActivity.this.startActivity(new Intent(MainActivity.this, BrowseActivity.class));
                 break;
             default:
                 mainViewModel.selectMediaServer(item.getTitle().toString());

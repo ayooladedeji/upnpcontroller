@@ -4,11 +4,16 @@ import android.app.SearchManager;
 import android.content.Context;
 import android.databinding.DataBindingUtil;
 import android.os.Bundle;
+import android.support.annotation.NonNull;
+import android.support.design.widget.NavigationView;
+import android.support.v4.view.GravityCompat;
+import android.support.v4.widget.DrawerLayout;
+import android.support.v7.app.ActionBarDrawerToggle;
 import android.support.v7.app.AppCompatActivity;
-import android.support.v7.widget.LinearLayoutManager;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
+import android.view.SubMenu;
 import android.view.View;
 import android.widget.SearchView;
 import android.widget.Toast;
@@ -18,6 +23,7 @@ import com.cambridgeaudio.upnpcontroller.BR;
 import com.cambridgeaudio.upnpcontroller.R;
 import com.cambridgeaudio.upnpcontroller.databinding.ActivityBrowseBinding;
 import com.cambridgeaudio.upnpcontroller.dialogs.SimpleDialog;
+import com.cambridgeaudio.upnpcontroller.recyclerbinding.WrapContentLinearLayoutManager;
 import com.cambridgeaudio.upnpcontroller.recyclerbinding.adapter.ClickHandler;
 import com.cambridgeaudio.upnpcontroller.recyclerbinding.adapter.binder.CompositeItemBinder;
 import com.cambridgeaudio.upnpcontroller.recyclerbinding.adapter.binder.ItemBinder;
@@ -30,13 +36,22 @@ import com.cambridgeaudio.upnpcontroller.viewmodels.itemviews.ArtistViewModel;
 import com.cambridgeaudio.upnpcontroller.viewmodels.itemviews.TrackViewModel;
 import com.crashlytics.android.Crashlytics;
 
+import org.fourthline.cling.model.meta.Device;
+
+import java.util.HashSet;
+import java.util.Set;
+import java.util.concurrent.TimeUnit;
+
 import io.fabric.sdk.android.Fabric;
+import io.reactivex.Observable;
+import io.reactivex.Observer;
 
 /**
  * Created by Ayo on 27/06/2017.
  */
 
-public class BrowseActivity extends AppCompatActivity implements BrowseViewModel.ViewController {
+public class BrowseActivity extends AppCompatActivity
+        implements NavigationView.OnNavigationItemSelectedListener, BrowseViewModel.ViewController {
 
 
     private BrowseViewModel browseViewModel;
@@ -58,13 +73,58 @@ public class BrowseActivity extends AppCompatActivity implements BrowseViewModel
         binding = DataBindingUtil.setContentView(this, R.layout.activity_browse);
         binding.setBrowseViewModel(browseViewModel);
         binding.setBrowseView(this);
-        binding.albumList.setLayoutManager(new LinearLayoutManager(this));
-        binding.trackList.setLayoutManager(new LinearLayoutManager(this));
-        binding.artistList.setLayoutManager(new LinearLayoutManager(this));
+        binding.albumList.setLayoutManager(new WrapContentLinearLayoutManager(this));
+        binding.trackList.setLayoutManager(new WrapContentLinearLayoutManager(this));
+        binding.artistList.setLayoutManager(new WrapContentLinearLayoutManager(this));
 
         setSupportActionBar(binding.toolbarBrowse);
         showTrackList();
         browseViewModel.getInitialList();
+        setUpDrawerLayout();
+    }
+
+    private void setUpDrawerLayout() {
+        ActionBarDrawerToggle toggle = new ActionBarDrawerToggle(
+                this, binding.drawerLayoutBrowse, binding.toolbarBrowse, R.string.navigation_drawer_open, R.string.navigation_drawer_close);
+        binding.drawerLayoutBrowse.addDrawerListener(toggle);
+        toggle.syncState();
+        getMediaRenderers();
+        binding.navViewBrowse.setNavigationItemSelectedListener(this);
+        binding.drawerLayoutBrowse.openDrawer(GravityCompat.START);
+    }
+
+    private void getMediaRenderers() {
+        //todo this is not very stable
+        Menu menu = binding.navViewBrowse.getMenu();
+        Set<String> menuItems = new HashSet<>();
+
+        menu.add("Browse");
+        SubMenu subMenu = menu.addSubMenu(0, 1, Menu.NONE, "Media Servers");
+        browseViewModel.getMediaRenderers()
+                .timeout(3, TimeUnit.SECONDS, new Observable<Device>() {
+                    @Override
+                    protected void subscribeActual(Observer<? super Device> observer) {
+                        BrowseActivity.this.runOnUiThread(() -> {
+                            for (String s : menuItems) {
+                                subMenu.add(s);
+                            }
+                            //dismissProgressDialog();
+                        });
+                    }
+                })
+                .map(device -> device.getDetails().getFriendlyName())
+                .subscribe(menuItems::add);
+
+    }
+
+    @Override
+    public void onBackPressed() {
+        DrawerLayout drawer = binding.drawerLayoutBrowse;
+        if (drawer.isDrawerOpen(GravityCompat.START)) {
+            drawer.closeDrawer(GravityCompat.START);
+        } else {
+            super.onBackPressed();
+        }
     }
 
     @Override
@@ -88,33 +148,53 @@ public class BrowseActivity extends AppCompatActivity implements BrowseViewModel
     }
 
     @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        int id = item.getItemId();
+        return id == R.id.action_settings || super.onOptionsItemSelected(item);
+
+    }
+
+    @Override
+    public boolean onNavigationItemSelected(@NonNull MenuItem item) {
+        String itemClicked = item.getTitle().toString();
+        switch(itemClicked) {
+            default:
+                browseViewModel.selectMediaRenderer(item.getTitle().toString());
+                break;
+        }
+        DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
+        drawer.closeDrawer(GravityCompat.START);
+        return true;
+    }
+
+    @Override
     public void showTrackList() {
-        binding.tracksView.setVisibility(View.VISIBLE);
+        this.runOnUiThread(() -> binding.tracksView.setVisibility(View.VISIBLE));
     }
 
     @Override
     public void showAlbumList() {
-        binding.albumsView.setVisibility(View.VISIBLE);
+        this.runOnUiThread(() -> binding.albumsView.setVisibility(View.VISIBLE));
     }
 
     @Override
     public void showArtistList() {
-        binding.artistsView.setVisibility(View.VISIBLE);
+        this.runOnUiThread(() -> binding.artistsView.setVisibility(View.VISIBLE));
     }
 
     @Override
     public void hideTrackList() {
-        binding.tracksView.setVisibility(View.GONE);
+        this.runOnUiThread(() -> binding.tracksView.setVisibility(View.GONE));
     }
 
     @Override
     public void hideAlbumList() {
-        binding.albumsView.setVisibility(View.GONE);
+        this.runOnUiThread(() -> binding.albumsView.setVisibility(View.GONE));
     }
 
     @Override
     public void hideArtistList() {
-        binding.artistsView.setVisibility(View.GONE);
+        this.runOnUiThread(() -> binding.artistsView.setVisibility(View.GONE));
     }
 
     @Override
@@ -129,6 +209,7 @@ public class BrowseActivity extends AppCompatActivity implements BrowseViewModel
 
     public ClickHandler<TrackViewModel> trackClickHandler() {
         return trackViewModel -> {
+            browseViewModel.play(trackViewModel.getModel());
             Toast.makeText(BrowseActivity.this, trackViewModel.getTitle(), Toast.LENGTH_SHORT).show();
         };
     }
@@ -141,7 +222,7 @@ public class BrowseActivity extends AppCompatActivity implements BrowseViewModel
     public ClickHandler<AlbumViewModel> albumClickHandler() {
         return albumViewModel -> {
             Toast.makeText(BrowseActivity.this, albumViewModel.getTitle(), Toast.LENGTH_SHORT).show();
-            browseViewModel.onAlbumClick(albumViewModel.getId());
+            browseViewModel.onContainerClick(albumViewModel.getId(), "album");
         };
     }
 
@@ -153,7 +234,7 @@ public class BrowseActivity extends AppCompatActivity implements BrowseViewModel
     public ClickHandler<ArtistViewModel> artistClickHandler() {
         return artistViewModel -> {
             Toast.makeText(BrowseActivity.this, artistViewModel.getName(), Toast.LENGTH_SHORT).show();
-            browseViewModel.onArtistClick(artistViewModel.getId());
+            browseViewModel.onContainerClick(artistViewModel.getId(), "artist");
         };
     }
 
@@ -167,4 +248,6 @@ public class BrowseActivity extends AppCompatActivity implements BrowseViewModel
         browseViewModel.onDestroy();
         super.onDestroy();
     }
+
+
 }

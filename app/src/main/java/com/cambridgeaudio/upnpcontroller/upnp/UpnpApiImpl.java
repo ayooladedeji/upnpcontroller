@@ -12,9 +12,13 @@ import org.fourthline.cling.model.message.UpnpResponse;
 import org.fourthline.cling.model.meta.Device;
 import org.fourthline.cling.model.meta.LocalDevice;
 import org.fourthline.cling.model.meta.RemoteDevice;
+import org.fourthline.cling.model.meta.Service;
 import org.fourthline.cling.model.types.UDAServiceType;
 import org.fourthline.cling.registry.DefaultRegistryListener;
 import org.fourthline.cling.registry.Registry;
+import org.fourthline.cling.support.avtransport.callback.Play;
+import org.fourthline.cling.support.avtransport.callback.SetAVTransportURI;
+import org.fourthline.cling.support.avtransport.callback.Stop;
 import org.fourthline.cling.support.contentdirectory.callback.Browse;
 import org.fourthline.cling.support.model.BrowseFlag;
 import org.fourthline.cling.support.model.DIDLContent;
@@ -24,15 +28,12 @@ import org.fourthline.cling.support.model.container.Container;
 import org.fourthline.cling.support.model.item.AudioItem;
 
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.Objects;
 
 import io.reactivex.BackpressureStrategy;
 import io.reactivex.Flowable;
 import io.reactivex.Observable;
 import io.reactivex.android.schedulers.AndroidSchedulers;
-import io.reactivex.disposables.Disposable;
-import io.reactivex.internal.operators.flowable.FlowableFromCallable;
 import io.reactivex.schedulers.Schedulers;
 import io.reactivex.subjects.BehaviorSubject;
 import io.reactivex.subjects.ReplaySubject;
@@ -50,17 +51,22 @@ public class UpnpApiImpl implements UpnpApi {
     private AndroidUpnpService upnpService;
     private ControlPoint controlPoint;
     private Device selectedMediaServer = null;
+    private Device selectedMediaRenderer = null;
     private ArrayList<Device> mediaServers = new ArrayList<>();
+    private ArrayList<Device> mediaRenderers = new ArrayList<>();
 
     //rx objects
-    private BehaviorSubject<ArrayList<Device>> mediaServersSubject = BehaviorSubject.create();
-    private ReplaySubject<Device> testDeviceSubject = ReplaySubject.create();
+    private BehaviorSubject<ArrayList<Device>> mediaServerListSubject = BehaviorSubject.create();
+    private BehaviorSubject<ArrayList<Device>> mediaRendererListSubject = BehaviorSubject.create();
 
-    private ServiceConnection serviceConnection  = null;
+    private ReplaySubject<Device> mediaServerSubject = ReplaySubject.create();
+    private ReplaySubject<Device> mediaRendererSubject = ReplaySubject.create();
+
+    private ServiceConnection serviceConnection = null;
 
     @Override
     public ServiceConnection getServiceConnection() {
-        if(serviceConnection == null){
+        if (serviceConnection == null) {
             serviceConnection = new ServiceConnection() {
 
                 public void onServiceConnected(ComponentName className, IBinder service) {
@@ -126,24 +132,38 @@ public class UpnpApiImpl implements UpnpApi {
                 .subscribeOn(Schedulers.io())
                 .filter(didlObject -> didlObject instanceof AudioItem);
 
-//        return recursiveScan(id)
-//                .subscribeOn(Schedulers.io())
-//                .subscribe(didlObject -> {
-//                    if (didlObject instanceof AudioItem) {
-//                        Log.d(TAG, didlObject.getTitle());
-//                    }
-//                });
     }
 
     @Override
     public Observable<ArrayList<Device>> getMediaServersAsList() {
-        return mediaServersSubject.observeOn(AndroidSchedulers.mainThread());
+        return mediaServerListSubject.observeOn(AndroidSchedulers.mainThread());
+    }
+
+    @Override
+    public Observable<ArrayList<Device>> getMediaRenderersAsList() {
+        return mediaRendererListSubject.observeOn(AndroidSchedulers.mainThread());
+
+    }
+
+    @Override
+    public void selectMediaRenderer(Device device) {
+        selectedMediaRenderer = device;
+    }
+
+    @Override
+    public Device getSelectedMediaRenderer() {
+        return selectedMediaRenderer;
     }
 
 
     @Override
     public Observable<Device> getMediaServers() {
-        return testDeviceSubject.observeOn(AndroidSchedulers.mainThread());
+        return mediaServerSubject;
+    }
+
+    @Override
+    public Observable<Device> getMediaRenderers() {
+        return mediaRendererSubject;
     }
 
 
@@ -153,13 +173,108 @@ public class UpnpApiImpl implements UpnpApi {
 
     @Override
     public void selectMediaServer(Device device) {
-        Log.d(TAG, "device selected: "+ device.getDetails().getFriendlyName());
+        Log.d(TAG, "device selected: " + device.getDetails().getFriendlyName());
         selectedMediaServer = device;
     }
 
     @Override
     public void destroy() {
         upnpService.getRegistry().removeListener(registryListener);
+    }
+
+    @Override
+    public void playTrack(String uri) {
+
+        if (getAVTransportService() == null)
+            return;
+
+        controlPoint.execute(new Stop(getAVTransportService()) {
+            @Override
+            public void success(ActionInvocation invocation) {
+                Log.v(TAG, "Success stopping ! ");
+                callback();
+            }
+
+            @Override
+            public void failure(ActionInvocation arg0, UpnpResponse arg1, String arg2) {
+                Log.w(TAG, "Fail to stop ! " + arg2);
+                callback();
+            }
+
+            public void callback() {
+                setURI(uri);
+            }
+        });
+    }
+
+    private void setURI(String uri) {
+        Log.i(TAG, "Set uri to " + uri);
+
+        if (getAVTransportService() == null)
+            return;
+
+        controlPoint.execute(new SetAVTransportURI(getAVTransportService(), uri) {
+            @Override
+            public void success(ActionInvocation invocation) {
+                super.success(invocation);
+                Log.i(TAG, "URI successfully set !");
+                commandPlay();
+            }
+
+            @Override
+            public void failure(ActionInvocation arg0, UpnpResponse arg1, String arg2) {
+                Log.w(TAG, "Fail to set URI ! " + arg2);
+            }
+        });
+    }
+
+    private void commandPlay() {
+        if (getAVTransportService() == null)
+            return;
+
+        controlPoint.execute(new Play(getAVTransportService()) {
+            @Override
+            public void success(ActionInvocation invocation) {
+                Log.v(TAG, "Success playing ! ");
+            }
+
+            @Override
+            public void failure(ActionInvocation arg0, UpnpResponse arg1, String arg2) {
+                Log.w(TAG, "Fail to play ! " + arg2);
+            }
+        });
+    }
+
+    @Override
+    public void stopTrack() {
+        if (getAVTransportService() == null)
+            return;
+
+        controlPoint.execute(new Stop(getAVTransportService()) {
+            @Override
+            public void success(ActionInvocation invocation) {
+                Log.v(TAG, "Success stopping ! ");
+                // TODO update player state
+            }
+
+            @Override
+            public void failure(ActionInvocation arg0, UpnpResponse arg1, String arg2) {
+                Log.w(TAG, "Fail to stop ! " + arg2);
+            }
+        });
+    }
+
+    @Override
+    public void pauseTrack() {
+
+    }
+
+    private Service getAVTransportService() {
+        if (selectedMediaRenderer == null) {
+            Log.d(TAG, "media renderer is null");
+            return null;
+        }
+        return selectedMediaRenderer.findService(new UDAServiceType("AVTransport"));
 
     }
 
@@ -202,11 +317,16 @@ public class UpnpApiImpl implements UpnpApi {
 
         void deviceAdded(final Device device) {
             if (Objects.equals(device.getType().getType(), "MediaServer")) {
-                Log.d(TAG, "Discovered device: " + device.getDetails().getFriendlyName());
-                testDeviceSubject.onNext(device);
+                Log.d(TAG, "Discovered MediaServer: " + device.getDetails().getFriendlyName());
+                mediaServerSubject.onNext(device);
 
                 mediaServers.add(device);
-                mediaServersSubject.onNext(mediaServers);
+                mediaServerListSubject.onNext(mediaServers);
+            } else if (Objects.equals(device.getType().getType(), "MediaRenderer")) {
+                Log.d(TAG, "Discovered MediaRenderer: " + device.getDetails().getFriendlyName());
+                mediaRendererSubject.onNext(device);
+                mediaRenderers.add(device);
+                mediaServerListSubject.onNext(mediaRenderers);
             }
         }
 
@@ -214,7 +334,10 @@ public class UpnpApiImpl implements UpnpApi {
             if (Objects.equals(device.getType().getType(), "MediaServer")) {
                 Log.d(TAG, "Removed device: " + device.getDetails().getFriendlyName());
                 mediaServers.remove(device);
-                mediaServersSubject.onNext(mediaServers);
+                mediaServerListSubject.onNext(mediaServers);
+            } else if (Objects.equals(device.getType().getType(), "MediaRenderer")) {
+                mediaRenderers.remove(device);
+                mediaServerListSubject.onNext(mediaRenderers);
             }
 
         }

@@ -14,115 +14,133 @@
             type="com.cambridgeaudio.upnpcontroller.activities.BrowseActivity" />
     </data>
 
-    <RelativeLayout xmlns:tools="http://schemas.android.com/tools"
+    <android.support.v4.widget.DrawerLayout xmlns:tools="http://schemas.android.com/tools"
+        android:id="@+id/drawer_layout_browse"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:fitsSystemWindows="true"
-        tools:context=".activities.BrowseActivity">
+        tools:context="com.cambridgeaudio.upnpcontroller.activities.BrowseActivity"
+        tools:openDrawer="start">
 
-        <android.support.design.widget.AppBarLayout
-            android:id="@+id/app_bar_browse"
+        <RelativeLayout xmlns:tools="http://schemas.android.com/tools"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:theme="@style/AppTheme.AppBarOverlay">
+            android:layout_height="match_parent"
+            android:fitsSystemWindows="true"
+            tools:context=".activities.BrowseActivity">
 
-            <android.support.v7.widget.Toolbar
-                android:id="@+id/toolbar_browse"
+            <android.support.design.widget.AppBarLayout
+                android:id="@+id/app_bar_browse"
                 android:layout_width="match_parent"
-                android:layout_height="?attr/actionBarSize"
-                android:background="?attr/colorPrimary"
-                app:popupTheme="@style/AppTheme.PopupOverlay" />
+                android:layout_height="wrap_content"
+                android:theme="@style/AppTheme.AppBarOverlay">
 
-        </android.support.design.widget.AppBarLayout>
+                <android.support.v7.widget.Toolbar
+                    android:id="@+id/toolbar_browse"
+                    android:layout_width="match_parent"
+                    android:layout_height="?attr/actionBarSize"
+                    android:background="?attr/colorPrimary"
+                    app:popupTheme="@style/AppTheme.PopupOverlay" />
 
-        <ScrollView
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_below="@+id/app_bar_browse">
+            </android.support.design.widget.AppBarLayout>
 
-            <RelativeLayout
+            <ScrollView
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content">
+                android:layout_height="wrap_content"
+                android:layout_below="@+id/app_bar_browse">
 
                 <RelativeLayout
-                    android:id="@+id/tracks_view"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content">
 
-                    <TextView
-                        android:id="@+id/tracks_label"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:padding="8dp"
-                        android:text="@string/tracks"
-                        android:textStyle="bold" />
-
-                    <android.support.v7.widget.RecyclerView
-                        android:id="@+id/track_list"
+                    <RelativeLayout
+                        android:id="@+id/tracks_view"
                         android:layout_width="match_parent"
-                        android:layout_height="match_parent"
-                        android:layout_below="@+id/tracks_label"
-                        android:scrollbars="vertical"
-                        app:clickHandler="@{browseView.trackClickHandler}"
-                        app:itemViewBinder="@{browseView.trackItemViewBinder}"
-                        app:items="@{browseViewModel.trackList}" />
-                </RelativeLayout>
+                        android:layout_height="wrap_content">
 
-                <RelativeLayout
-                    android:id="@+id/albums_view"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_alignParentStart="true"
-                    android:layout_below="@+id/tracks_view">
+                        <TextView
+                            android:id="@+id/tracks_label"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:padding="8dp"
+                            android:text="@string/tracks"
+                            android:textStyle="bold" />
 
-                    <TextView
-                        android:id="@+id/albums_label"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:padding="8dp"
-                        android:text="@string/albums"
-                        android:textStyle="bold" />
+                        <android.support.v7.widget.RecyclerView
+                            android:id="@+id/track_list"
+                            android:layout_width="match_parent"
+                            android:layout_height="match_parent"
+                            android:layout_below="@+id/tracks_label"
+                            android:scrollbars="vertical"
+                            app:clickHandler="@{browseView.trackClickHandler}"
+                            app:itemViewBinder="@{browseView.trackItemViewBinder}"
+                            app:items="@{browseViewModel.trackList}" />
+                    </RelativeLayout>
 
-                    <android.support.v7.widget.RecyclerView
-                        android:id="@+id/album_list"
+                    <RelativeLayout
+                        android:id="@+id/albums_view"
                         android:layout_width="match_parent"
-                        android:layout_height="match_parent"
-                        android:layout_below="@+id/albums_label"
-                        android:scrollbars="vertical"
-                        app:clickHandler="@{browseView.albumClickHandler}"
-                        app:itemViewBinder="@{browseView.albumItemViewBinder}"
-                        app:items="@{browseViewModel.albumList}" />
-
-                </RelativeLayout>
-
-                <RelativeLayout
-                    android:layout_below="@+id/albums_view"
-                    android:id="@+id/artists_view"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content">
-
-                    <TextView
-                        android:id="@+id/artists_label"
-                        android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:padding="8dp"
-                        android:text="@string/artists"
-                        android:textStyle="bold" />
+                        android:layout_alignParentStart="true"
+                        android:layout_below="@+id/tracks_view">
 
-                    <android.support.v7.widget.RecyclerView
-                        android:id="@+id/artist_list"
+                        <TextView
+                            android:id="@+id/albums_label"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:padding="8dp"
+                            android:text="@string/albums"
+                            android:textStyle="bold" />
+
+                        <android.support.v7.widget.RecyclerView
+                            android:id="@+id/album_list"
+                            android:layout_width="match_parent"
+                            android:layout_height="match_parent"
+                            android:layout_below="@+id/albums_label"
+                            android:scrollbars="vertical"
+                            app:clickHandler="@{browseView.albumClickHandler}"
+                            app:itemViewBinder="@{browseView.albumItemViewBinder}"
+                            app:items="@{browseViewModel.albumList}" />
+
+                    </RelativeLayout>
+
+                    <RelativeLayout
+                        android:id="@+id/artists_view"
                         android:layout_width="match_parent"
-                        android:layout_height="match_parent"
-                        android:layout_below="@+id/artists_label"
-                        android:scrollbars="vertical"
-                        app:clickHandler="@{browseView.artistClickHandler}"
-                        app:itemViewBinder="@{browseView.artistItemViewBinder}"
-                        app:items="@{browseViewModel.artistList}" />
+                        android:layout_height="wrap_content"
+                        android:layout_below="@+id/albums_view">
 
+                        <TextView
+                            android:id="@+id/artists_label"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:padding="8dp"
+                            android:text="@string/artists"
+                            android:textStyle="bold" />
+
+                        <android.support.v7.widget.RecyclerView
+                            android:id="@+id/artist_list"
+                            android:layout_width="match_parent"
+                            android:layout_height="match_parent"
+                            android:layout_below="@+id/artists_label"
+                            android:scrollbars="vertical"
+                            app:clickHandler="@{browseView.artistClickHandler}"
+                            app:itemViewBinder="@{browseView.artistItemViewBinder}"
+                            app:items="@{browseViewModel.artistList}" />
+
+                    </RelativeLayout>
                 </RelativeLayout>
-            </RelativeLayout>
-        </ScrollView>
+            </ScrollView>
 
-    </RelativeLayout>
+        </RelativeLayout>
 
+        <android.support.design.widget.NavigationView
+            android:id="@+id/nav_view_browse"
+            android:layout_width="wrap_content"
+            android:layout_height="match_parent"
+            android:layout_gravity="start"
+            android:fitsSystemWindows="true"
+            app:headerLayout="@layout/nav_header_main"
+            app:menu="@menu/activity_main_drawer" />
+
+    </android.support.v4.widget.DrawerLayout>
 </layout>

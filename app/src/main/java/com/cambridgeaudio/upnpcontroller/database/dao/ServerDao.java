@@ -9,8 +9,6 @@ import com.cambridgeaudio.upnpcontroller.database.model.relations.ServerWithTrac
 
 import java.util.List;
 
-import io.reactivex.Flowable;
-
 import static android.arch.persistence.room.OnConflictStrategy.REPLACE;
 
 /**
@@ -27,6 +25,6 @@ public interface ServerDao {
     Server getByName(String name);
 
     @Query("select * from servers where name =:name")
-    Flowable<ServerWithTracks> getTracksFromServer(String name);
+    List<ServerWithTracks> getTracksFromServer(String name);
 
 }

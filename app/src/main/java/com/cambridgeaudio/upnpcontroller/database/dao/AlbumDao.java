@@ -21,16 +21,16 @@ import static android.arch.persistence.room.OnConflictStrategy.REPLACE;
 public interface AlbumDao {
 
     @Query("select  * from albums where title = :title")
-    Flowable<AlbumWithTracks> getTracksByTitle(String title);
+    List<AlbumWithTracks> getTracksByTitle(String title);
 
     @Query("select  * from albums where id = :id")
-    Flowable<AlbumWithTracks> getTracksById(int id);
+    List<AlbumWithTracks> getTracksById(int id);
 
     @Query("select * from albums")
-    Flowable<Album> getAll();
+    List<Album> getAll();
 
-    @Query("select * from albums where title = :title")
-    Flowable<Album> getByTitle(String title);
+    @Query("select * from albums where title like :title")
+    List<Album> getByTitle(String title);
 
     @Query("select * from albums where id = :id")
     Album getById(int id);

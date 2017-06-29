@@ -3,6 +3,7 @@ package com.cambridgeaudio.upnpcontroller.database.model;
 import android.arch.persistence.room.ColumnInfo;
 import android.arch.persistence.room.Entity;
 import android.arch.persistence.room.ForeignKey;
+import android.arch.persistence.room.Ignore;
 import android.arch.persistence.room.Index;
 import android.arch.persistence.room.PrimaryKey;
 
@@ -34,6 +35,11 @@ public class Album {
     public Album(String title, long artistId) {
         this.title = title;
         this.artistId = artistId;
+    }
+
+    @Ignore
+    public Album(String title) {
+        this.title = title;
     }
 
     public long getId() {

@@ -64,7 +64,7 @@ public class BrowseActivity extends AppCompatActivity implements BrowseViewModel
 
         setSupportActionBar(binding.toolbarBrowse);
         showTrackList();
-        browseViewModel.getTrackList();
+        browseViewModel.getInitialList();
     }
 
     @Override
@@ -89,32 +89,32 @@ public class BrowseActivity extends AppCompatActivity implements BrowseViewModel
 
     @Override
     public void showTrackList() {
-        binding.trackList.setVisibility(View.VISIBLE);
+        binding.tracksView.setVisibility(View.VISIBLE);
     }
 
     @Override
     public void showAlbumList() {
-        binding.albumList.setVisibility(View.VISIBLE);
+        binding.albumsView.setVisibility(View.VISIBLE);
     }
 
     @Override
     public void showArtistList() {
-        binding.artistList.setVisibility(View.VISIBLE);
+        binding.artistsView.setVisibility(View.VISIBLE);
     }
 
     @Override
     public void hideTrackList() {
-        binding.trackList.setVisibility(View.GONE);
+        binding.tracksView.setVisibility(View.GONE);
     }
 
     @Override
     public void hideAlbumList() {
-        binding.albumList.setVisibility(View.GONE);
+        binding.albumsView.setVisibility(View.GONE);
     }
 
     @Override
     public void hideArtistList() {
-        binding.artistList.setVisibility(View.GONE);
+        binding.artistsView.setVisibility(View.GONE);
     }
 
     @Override
@@ -141,6 +141,7 @@ public class BrowseActivity extends AppCompatActivity implements BrowseViewModel
     public ClickHandler<AlbumViewModel> albumClickHandler() {
         return albumViewModel -> {
             Toast.makeText(BrowseActivity.this, albumViewModel.getTitle(), Toast.LENGTH_SHORT).show();
+            browseViewModel.onAlbumClick(albumViewModel.getId());
         };
     }
 
@@ -152,6 +153,7 @@ public class BrowseActivity extends AppCompatActivity implements BrowseViewModel
     public ClickHandler<ArtistViewModel> artistClickHandler() {
         return artistViewModel -> {
             Toast.makeText(BrowseActivity.this, artistViewModel.getName(), Toast.LENGTH_SHORT).show();
+            browseViewModel.onArtistClick(artistViewModel.getId());
         };
     }
 
@@ -160,4 +162,9 @@ public class BrowseActivity extends AppCompatActivity implements BrowseViewModel
                 new ArtistObjectBinder(BR.artist, R.layout.item_artist));
     }
 
+    @Override
+    protected void onDestroy() {
+        browseViewModel.onDestroy();
+        super.onDestroy();
+    }
 }

@@ -8,8 +8,6 @@ import com.cambridgeaudio.upnpcontroller.database.model.Track;
 
 import java.util.List;
 
-import io.reactivex.Flowable;
-
 import static android.arch.persistence.room.OnConflictStrategy.REPLACE;
 
 /**
@@ -20,17 +18,18 @@ import static android.arch.persistence.room.OnConflictStrategy.REPLACE;
 public interface TrackDao {
 
     @Query("select * from tracks")
-    Flowable<Track> getAll();
-
-    @Query("select * from tracks")
-    List<Track> getAllList();
+    List<Track> getAll();
 
     //todo add percentage signs
     @Query("select * from tracks where track_title  like :trackTitle")
-    Flowable<Track> getAllByTitle(String trackTitle);
+    List<Track> getAllByTitle(String trackTitle);
 
-    @Query("select * from tracks where track_title  =:trackTitle")
-    List<Track> getAllByTitleList(String trackTitle);
+    @Query("select * from tracks where album_id = :id")
+    List<Track> getAllByAlbumId(long id);
+
+    @Query("select * from tracks where artist_id = :id")
+    List<Track> getAllByArtistId(long id);
+
     @Insert(onConflict = REPLACE)
     void insert(Track... tracks);
 }

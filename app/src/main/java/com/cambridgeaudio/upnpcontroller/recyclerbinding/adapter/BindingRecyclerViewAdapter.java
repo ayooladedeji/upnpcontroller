@@ -4,8 +4,11 @@ import android.databinding.DataBindingUtil;
 import android.databinding.ObservableArrayList;
 import android.databinding.ObservableList;
 import android.databinding.ViewDataBinding;
+import android.os.Handler;
+import android.os.Looper;
 import android.support.annotation.Nullable;
 import android.support.v7.widget.RecyclerView;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -23,7 +26,7 @@ public class BindingRecyclerViewAdapter<T> extends RecyclerView.Adapter<BindingR
     private ObservableList<T> items;
     private LayoutInflater inflater;
     private ClickHandler<T> clickHandler;
-    private static boolean onBind;
+    private static boolean onBind = false;
 
     public BindingRecyclerViewAdapter(ItemBinder<T> itemBinder, @Nullable Collection<T> items) {
         this.itemBinder = itemBinder;
@@ -125,16 +128,26 @@ public class BindingRecyclerViewAdapter<T> extends RecyclerView.Adapter<BindingR
         @Override
         public void onChanged(ObservableList sender) {
             RecyclerView.Adapter adapter = adapterReference.get();
-            if (adapter != null) {
-                adapter.notifyDataSetChanged();
+            if (adapter != null  && !onBind) {
+                Handler handler = new Handler(Looper.getMainLooper());
+
+                final Runnable r = adapter::notifyDataSetChanged;
+
+                handler.post(r);
+
             }
         }
 
         @Override
         public void onItemRangeChanged(ObservableList sender, int positionStart, int itemCount) {
             RecyclerView.Adapter adapter = adapterReference.get();
-            if (adapter != null) {
-                adapter.notifyItemRangeChanged(positionStart, itemCount);
+            if (adapter != null  && !onBind) {
+                Handler handler = new Handler(Looper.getMainLooper());
+
+                final Runnable r = () -> adapter.notifyItemRangeChanged(positionStart, itemCount);
+
+                handler.post(r);
+
             }
         }
 
@@ -142,24 +155,41 @@ public class BindingRecyclerViewAdapter<T> extends RecyclerView.Adapter<BindingR
         public void onItemRangeInserted(ObservableList sender, int positionStart, int itemCount) {
             RecyclerView.Adapter adapter = adapterReference.get();
             if (adapter != null && !onBind) {
+                try {
+                    Handler handler = new Handler(Looper.getMainLooper());
 
-                adapter.notifyItemRangeInserted(positionStart, itemCount);
+                    final Runnable r = () -> adapter.notifyItemRangeInserted(positionStart, itemCount);
+
+                    handler.post(r);
+                } catch (IndexOutOfBoundsException e) {
+                    Log.e("probe", "meet a IOOBE in RecyclerView");
+                }
             }
         }
 
         @Override
         public void onItemRangeMoved(ObservableList sender, int fromPosition, int toPosition, int itemCount) {
             RecyclerView.Adapter adapter = adapterReference.get();
-            if (adapter != null) {
-                adapter.notifyItemMoved(fromPosition, toPosition);
+            if (adapter != null  && !onBind) {
+                Handler handler = new Handler(Looper.getMainLooper());
+
+                final Runnable r = () -> adapter.notifyItemMoved(fromPosition, toPosition);
+
+                handler.post(r);
+
             }
         }
 
         @Override
         public void onItemRangeRemoved(ObservableList sender, int positionStart, int itemCount) {
             RecyclerView.Adapter adapter = adapterReference.get();
-            if (adapter != null) {
-                adapter.notifyItemRangeRemoved(positionStart, itemCount);
+            if (adapter != null  && !onBind) {
+                Handler handler = new Handler(Looper.getMainLooper());
+
+                final Runnable r = () -> adapter.notifyItemRangeRemoved(positionStart, itemCount);
+
+                handler.post(r);
+
             }
         }
     }

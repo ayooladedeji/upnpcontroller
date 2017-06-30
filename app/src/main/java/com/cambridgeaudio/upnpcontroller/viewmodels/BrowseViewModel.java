@@ -183,9 +183,11 @@ public class BrowseViewModel extends BaseObservable {
 
                     switch (container) {
                         case "artist":
-                            tracks = appDatabase.trackDao().getAllByArtistId(id); break;
+                            tracks = appDatabase.trackDao().getAllByArtistId(id);
+                            break;
                         case "album":
-                            tracks = appDatabase.trackDao().getAllByAlbumId(id); break;
+                            tracks = appDatabase.trackDao().getAllByAlbumId(id);
+                            break;
 
                     }
 
@@ -207,24 +209,24 @@ public class BrowseViewModel extends BaseObservable {
         compositeDisposable.add(d);
     }
 
-    public Observable<Device> getMediaRenderers(){
+    public Observable<Device> getMediaRenderers() {
         return upnpApi.getMediaRenderers();
     }
 
     public void selectMediaRenderer(String name) {
 
-        upnpApi.getMediaRenderersAsList()
-                .observeOn(AndroidSchedulers.mainThread())
-                .subscribe(devices -> devices.stream().filter(d -> name.equals(d.getDetails().getFriendlyName())).forEach(d -> upnpApi.selectMediaRenderer(d)));
+        upnpApi.getMediaRenderers()
+                .filter(device -> Objects.equals(device.getDetails().getFriendlyName(), name))
+                .subscribe(device ->  upnpApi.selectMediaRenderer(device));
     }
 
     public void onDestroy() {
         compositeDisposable.dispose();
     }
 
-    public void play(Track track){
+    public void play(Track track) {
 
-        if(upnpApi.getSelectedMediaRenderer() == null){
+        if (upnpApi.getSelectedMediaRenderer() == null) {
             viewController.showDialog("Error", "please select a media renderer from the navigation drawer", true);
         }
         Disposable d =
@@ -240,6 +242,7 @@ public class BrowseViewModel extends BaseObservable {
 
 
     }
+
     public interface ViewController {
 
         void showTrackList();

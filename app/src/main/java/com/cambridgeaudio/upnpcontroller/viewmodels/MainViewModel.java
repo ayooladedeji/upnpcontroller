@@ -24,6 +24,7 @@ import org.fourthline.cling.model.meta.Device;
 import org.fourthline.cling.support.model.item.MusicTrack;
 
 import java.util.ArrayList;
+import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 
 import io.reactivex.BackpressureStrategy;
@@ -70,10 +71,17 @@ public class MainViewModel extends BaseObservable {
 
     public void selectMediaServer(String name) {
 
-        upnpApi.getMediaServersAsList()
-                .observeOn(AndroidSchedulers.mainThread())
-                .subscribe(devices -> {
-                    devices.stream().filter(d -> name.equals(d.getDetails().getFriendlyName())).forEach(d -> upnpApi.selectMediaServer(d));
+//        upnpApi.getMediaServersAsList()
+//                .observeOn(AndroidSchedulers.mainThread())
+//                .subscribe(devices -> {
+//                    devices.stream().filter(d -> name.equals(d.getDetails().getFriendlyName())).forEach(d -> upnpApi.selectMediaServer(d));
+//                    browse("0");
+//                });
+
+        upnpApi.getMediaServers()
+                .filter(device -> Objects.equals(device.getDetails().getFriendlyName(), name))
+                .subscribe(device -> {
+                    upnpApi.selectMediaServer(device);
                     browse("0");
                 });
 

@@ -97,9 +97,7 @@ public class BrowseActivity extends AppCompatActivity
         //todo this is not very stable
         Menu menu = binding.navViewBrowse.getMenu();
         Set<String> menuItems = new HashSet<>();
-
-        menu.add("Browse");
-        SubMenu subMenu = menu.addSubMenu(0, 1, Menu.NONE, "Media Servers");
+        SubMenu subMenu = menu.addSubMenu(0, 1, Menu.NONE, "Media Renderers");
         browseViewModel.getMediaRenderers()
                 .timeout(3, TimeUnit.SECONDS, new Observable<Device>() {
                     @Override
@@ -162,7 +160,7 @@ public class BrowseActivity extends AppCompatActivity
                 browseViewModel.selectMediaRenderer(item.getTitle().toString());
                 break;
         }
-        DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
+        DrawerLayout drawer = binding.drawerLayoutBrowse;
         drawer.closeDrawer(GravityCompat.START);
         return true;
     }

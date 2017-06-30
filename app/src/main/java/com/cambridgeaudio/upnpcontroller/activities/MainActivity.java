@@ -148,7 +148,7 @@ public class MainActivity extends AppCompatActivity
                 mainViewModel.selectMediaServer(item.getTitle().toString());
                 break;
         }
-        DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
+        DrawerLayout drawer = binding.drawerLayout;
         drawer.closeDrawer(GravityCompat.START);
         return true;
     }

@@ -147,6 +147,7 @@ public class UpnpApiImpl implements UpnpApi {
 
     @Override
     public void selectMediaRenderer(Device device) {
+        Log.d(TAG, "Renderer selected: " + device.getDetails().getFriendlyName());
         selectedMediaRenderer = device;
     }
 
@@ -173,7 +174,7 @@ public class UpnpApiImpl implements UpnpApi {
 
     @Override
     public void selectMediaServer(Device device) {
-        Log.d(TAG, "device selected: " + device.getDetails().getFriendlyName());
+        Log.d(TAG, "Server selected: " + device.getDetails().getFriendlyName());
         selectedMediaServer = device;
     }
 
@@ -319,7 +320,6 @@ public class UpnpApiImpl implements UpnpApi {
             if (Objects.equals(device.getType().getType(), "MediaServer")) {
                 Log.d(TAG, "Discovered MediaServer: " + device.getDetails().getFriendlyName());
                 mediaServerSubject.onNext(device);
-
                 mediaServers.add(device);
                 mediaServerListSubject.onNext(mediaServers);
             } else if (Objects.equals(device.getType().getType(), "MediaRenderer")) {

@@ -28,7 +28,15 @@ public interface UpnpApi {
 
     Observable<ArrayList<Device>> getMediaServersAsList();
 
+    Observable<ArrayList<Device>> getMediaRenderersAsList();
+
+    void selectMediaRenderer(Device device);
+
+    Device getSelectedMediaRenderer();
+
     Observable<Device> getMediaServers();
+
+    Observable<Device> getMediaRenderers();
 
     Device getSelectedMediaServer();
 
@@ -36,6 +44,11 @@ public interface UpnpApi {
 
     void destroy();
 
+    void playTrack(String uri);
+
+    void stopTrack();
+
+    void pauseTrack();
 
 
 

@@ -140,10 +140,30 @@ public class UpnpApiImpl implements UpnpApi {
         return mediaServersSubject.observeOn(AndroidSchedulers.mainThread());
     }
 
+    @Override
+    public Observable<ArrayList<Device>> getMediaRenderersAsList() {
+        return null;
+    }
+
+    @Override
+    public void selectMediaRenderer(Device device) {
+
+    }
+
+    @Override
+    public Device getSelectedMediaRenderer() {
+        return null;
+    }
+
 
     @Override
     public Observable<Device> getMediaServers() {
         return testDeviceSubject.observeOn(AndroidSchedulers.mainThread());
+    }
+
+    @Override
+    public Observable<Device> getMediaRenderers() {
+        return null;
     }
 
 
@@ -160,6 +180,21 @@ public class UpnpApiImpl implements UpnpApi {
     @Override
     public void destroy() {
         upnpService.getRegistry().removeListener(registryListener);
+
+    }
+
+    @Override
+    public void playTrack(String uri) {
+
+    }
+
+    @Override
+    public void stopTrack() {
+
+    }
+
+    @Override
+    public void pauseTrack() {
 
     }
 

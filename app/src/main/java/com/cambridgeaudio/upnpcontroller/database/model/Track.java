@@ -12,6 +12,9 @@ import org.fourthline.cling.support.model.DIDLObject;
 import org.fourthline.cling.support.model.item.AudioItem;
 import org.fourthline.cling.support.model.item.MusicTrack;
 
+import java.net.MalformedURLException;
+import java.net.URL;
+
 import static android.arch.persistence.room.ForeignKey.CASCADE;
 
 /**
@@ -78,13 +81,16 @@ public class Track {
     private String serverName;
 
 
-    private static String createMediaPath(String s){
-        String regex = "http?://\\b\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}\\b:\\d{1,4}/";
-        String[] parts = s.split(regex);
-        return parts[1];
+    private static String createMediaPath(String s) throws MalformedURLException {
+//        String regex = "http?://\\b\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}\\b:\\d{1,4}/";
+//        String[] parts = s.split(regex);
+//        return parts[1];
+
+        URL url = new URL(s);
+        return url.getPath().substring(1);
     }
 
-    public static Track create(DIDLObject didlObject, String serverName, long albumId, long artistId) {
+    public static Track create(DIDLObject didlObject, String serverName, long albumId, long artistId) throws MalformedURLException {
         Track t = new Track();
 
         t.setServerName(serverName);

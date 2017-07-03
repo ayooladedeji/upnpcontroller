@@ -2,6 +2,7 @@ package com.cambridgeaudio.upnpcontroller.activities;
 
 import android.app.SearchManager;
 import android.content.Context;
+import android.content.Intent;
 import android.databinding.DataBindingUtil;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
@@ -36,6 +37,7 @@ import com.cambridgeaudio.upnpcontroller.viewmodels.itemviews.ArtistViewModel;
 import com.cambridgeaudio.upnpcontroller.viewmodels.itemviews.TrackViewModel;
 import com.crashlytics.android.Crashlytics;
 
+import org.fourthline.cling.Main;
 import org.fourthline.cling.model.meta.Device;
 
 import java.util.HashSet;
@@ -87,6 +89,7 @@ public class BrowseActivity extends AppCompatActivity
     }
     private void setUpNavMenu(){
         Menu menu = binding.navViewBrowse.getMenu();
+        menu.add("Servers");
         SubMenu subMenu = menu.addSubMenu(0, 1, Menu.NONE, "Media Renderers");
         populateMediaRenderers(subMenu);
 
@@ -172,6 +175,9 @@ public class BrowseActivity extends AppCompatActivity
     public boolean onNavigationItemSelected(@NonNull MenuItem item) {
         String itemClicked = item.getTitle().toString();
         switch(itemClicked) {
+            case "Servers":
+                BrowseActivity.this.startActivity(new Intent(BrowseActivity.this, MainActivity.class));
+                break;
             default:
                 browseViewModel.selectMediaRenderer(item.getTitle().toString());
                 break;

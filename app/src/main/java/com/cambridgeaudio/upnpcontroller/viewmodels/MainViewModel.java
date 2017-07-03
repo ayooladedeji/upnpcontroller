@@ -24,6 +24,7 @@ import org.fourthline.cling.model.meta.Device;
 import org.fourthline.cling.support.model.item.MusicTrack;
 
 import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 import io.reactivex.BackpressureStrategy;
@@ -58,11 +59,14 @@ public class MainViewModel extends BaseObservable {
     }
 
     public Observable<Device> getMediaServers() {
-        viewController.showProgressDialog(null, "Finding servers....");
+        //viewController.showProgressDialog(null, "Finding servers....");
         return upnpApi
                 .getMediaServers();
     }
 
+    public Observable<ArrayList<Device>> getMediaServersAsList(){
+        return upnpApi.getMediaServersAsList();
+    }
     public ServiceConnection getServiceConnection() {
         return upnpApi.getServiceConnection();
     }

@@ -19,7 +19,6 @@ import android.widget.Toast;
 
 import com.cambridgeaudio.upnpcontroller.Application;
 import com.cambridgeaudio.upnpcontroller.R;
-import com.cambridgeaudio.upnpcontroller.database.AppDatabase;
 import com.cambridgeaudio.upnpcontroller.databinding.ActivityMainBinding;
 import com.cambridgeaudio.upnpcontroller.dialogs.LoadingDialog;
 import com.cambridgeaudio.upnpcontroller.viewmodels.MainViewModel;
@@ -28,15 +27,15 @@ import com.cambridgeaudio.upnpcontroller.recyclerbinding.adapter.ClickHandler;
 import com.cambridgeaudio.upnpcontroller.recyclerbinding.adapter.binder.CompositeItemBinder;
 import com.cambridgeaudio.upnpcontroller.recyclerbinding.adapter.binder.ItemBinder;
 import com.cambridgeaudio.upnpcontroller.recyclerbinding.binder.DidlObjectBinder;
-import com.cambridgeaudio.upnpcontroller.upnp.UpnpApiImpl;
 
 import com.crashlytics.android.Crashlytics;
 
 import io.fabric.sdk.android.Fabric;
 import io.reactivex.Observable;
 import io.reactivex.Observer;
+import io.reactivex.android.schedulers.AndroidSchedulers;
+import io.reactivex.schedulers.Schedulers;
 
-import org.fourthline.cling.Main;
 import org.fourthline.cling.android.AndroidUpnpServiceImpl;
 import org.fourthline.cling.model.meta.Device;
 
@@ -49,6 +48,7 @@ public class MainActivity extends AppCompatActivity
 
     private MainViewModel mainViewModel;
     private ActivityMainBinding binding;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -74,8 +74,24 @@ public class MainActivity extends AppCompatActivity
         );
 
         setSupportActionBar(binding.toolbar);
+        setUpNavMenu();
         setUpDrawerLayout();
 
+    }
+
+    private void setUpNavMenu(){
+        Menu menu = binding.navView.getMenu();
+        menu.add("Browse");
+        SubMenu subMenu = menu.addSubMenu(0, 1, Menu.NONE, "Media Servers");
+        populateMediaServers(subMenu);
+
+    }
+    private void populateMediaServers(SubMenu subMenu) {
+        mainViewModel.getMediaServers()
+                .subscribeOn(Schedulers.io())
+                .observeOn(AndroidSchedulers.mainThread())
+                .map(device -> device.getDetails().getFriendlyName())
+                .subscribe(subMenu::add);
     }
 
     private void setUpDrawerLayout() {
@@ -83,7 +99,7 @@ public class MainActivity extends AppCompatActivity
                 this, binding.drawerLayout, binding.toolbar, R.string.navigation_drawer_open, R.string.navigation_drawer_close);
         binding.drawerLayout.addDrawerListener(toggle);
         toggle.syncState();
-        getMediaServers();
+        //getMediaServers();
         binding.navView.setNavigationItemSelectedListener(this);
         binding.drawerLayout.openDrawer(GravityCompat.START);
     }

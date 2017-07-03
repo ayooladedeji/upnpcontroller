@@ -11,6 +11,7 @@ import android.widget.SearchView;
 import com.cambridgeaudio.upnpcontroller.database.AppDatabase;
 import com.cambridgeaudio.upnpcontroller.database.model.Album;
 import com.cambridgeaudio.upnpcontroller.database.model.Artist;
+import com.cambridgeaudio.upnpcontroller.database.model.Server;
 import com.cambridgeaudio.upnpcontroller.database.model.Track;
 import com.cambridgeaudio.upnpcontroller.viewmodels.itemviews.AlbumViewModel;
 import com.cambridgeaudio.upnpcontroller.viewmodels.itemviews.ArtistViewModel;
@@ -20,6 +21,10 @@ import com.crashlytics.android.Crashlytics;
 import com.jakewharton.rxbinding2.widget.RxSearchView;
 import com.jakewharton.rxbinding2.widget.SearchViewQueryTextEvent;
 
+import org.fourthline.cling.model.meta.Device;
+
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 
@@ -170,12 +175,22 @@ public class BrowseViewModel extends BaseObservable {
         compositeDisposable.addAll(d, d1, d2);
     }
 
-    public void onArtistClick(long id) {
+    public void onContainerClick(long id, String container) {
         Disposable d =
                 Observable.create(e -> {
+                    List<Track> tracks = new ArrayList<>();
 
+                    switch (container) {
+                        case "artist":
+                            tracks = appDatabase.trackDao().getAllByArtistId(id);
+                            break;
+                        case "album":
+                            tracks = appDatabase.trackDao().getAllByAlbumId(id);
+                            break;
+
+                    }
                     trackList.clear();
-                    for (Track track : appDatabase.trackDao().getAllByArtistId(id))
+                    for (Track track : tracks)
                         trackList.add(new TrackViewModel(track));
 
                     if (artistList.isEmpty())
@@ -192,30 +207,38 @@ public class BrowseViewModel extends BaseObservable {
         compositeDisposable.add(d);
     }
 
-    public void onAlbumClick(long id) {
-        Disposable d =
-                Observable.create(e -> {
+    public Observable<Device> getMediaRenderers() {
+        return upnpApi.getMediaRenderers();
+    }
 
-                    trackList.clear();
-                    for (Track track : appDatabase.trackDao().getAllByAlbumId(id))
-                        trackList.add(new TrackViewModel(track));
+    public void selectMediaRenderer(String name) {
 
-                    if (artistList.isEmpty())
-                        trackList.add(new TrackViewModel(new Track("EMPTY")));
-
-                    viewController.hideArtistList();
-                    viewController.hideAlbumList();
-
-                })
-                        .subscribeOn(Schedulers.io())
-                        .observeOn(AndroidSchedulers.mainThread())
-                        .subscribe();
-
-        compositeDisposable.add(d);
+        upnpApi.getMediaRenderers()
+                .filter(device -> Objects.equals(device.getDetails().getFriendlyName(), name))
+                .subscribe(device ->  upnpApi.selectMediaRenderer(device));
     }
 
     public void onDestroy() {
         compositeDisposable.dispose();
+    }
+
+    public void play(Track track) {
+
+        if (upnpApi.getSelectedMediaRenderer() == null) {
+            viewController.showDialog("Error", "please select a media renderer from the navigation drawer", true);
+        }
+        Disposable d =
+                Observable.create(e -> {
+                    Server server = appDatabase.serverDao().getByName(track.getServerName());
+                    String uri = server.getAddress() + track.getMediaPath();
+                    upnpApi.playTrack(uri);
+                })
+                        .subscribeOn(Schedulers.io())
+                        .subscribe();
+
+        compositeDisposable.add(d);
+
+
     }
 
     public interface ViewController {

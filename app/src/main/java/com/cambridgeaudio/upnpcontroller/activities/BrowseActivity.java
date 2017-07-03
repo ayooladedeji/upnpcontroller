@@ -129,6 +129,7 @@ public class BrowseActivity extends AppCompatActivity implements BrowseViewModel
 
     public ClickHandler<TrackViewModel> trackClickHandler() {
         return trackViewModel -> {
+            browseViewModel.play(trackViewModel.getModel());
             Toast.makeText(BrowseActivity.this, trackViewModel.getTitle(), Toast.LENGTH_SHORT).show();
         };
     }
@@ -141,7 +142,7 @@ public class BrowseActivity extends AppCompatActivity implements BrowseViewModel
     public ClickHandler<AlbumViewModel> albumClickHandler() {
         return albumViewModel -> {
             Toast.makeText(BrowseActivity.this, albumViewModel.getTitle(), Toast.LENGTH_SHORT).show();
-            browseViewModel.onAlbumClick(albumViewModel.getId());
+            browseViewModel.onContainerClick(albumViewModel.getId(), "album");
         };
     }
 
@@ -153,7 +154,7 @@ public class BrowseActivity extends AppCompatActivity implements BrowseViewModel
     public ClickHandler<ArtistViewModel> artistClickHandler() {
         return artistViewModel -> {
             Toast.makeText(BrowseActivity.this, artistViewModel.getName(), Toast.LENGTH_SHORT).show();
-            browseViewModel.onArtistClick(artistViewModel.getId());
+            browseViewModel.onContainerClick(artistViewModel.getId(), "artist");
         };
     }
 

@@ -45,6 +45,8 @@ import java.util.concurrent.TimeUnit;
 import io.fabric.sdk.android.Fabric;
 import io.reactivex.Observable;
 import io.reactivex.Observer;
+import io.reactivex.android.schedulers.AndroidSchedulers;
+import io.reactivex.schedulers.Schedulers;
 
 /**
  * Created by Ayo on 27/06/2017.
@@ -80,15 +82,29 @@ public class BrowseActivity extends AppCompatActivity
         setSupportActionBar(binding.toolbarBrowse);
         showTrackList();
         browseViewModel.getInitialList();
+        setUpNavMenu();
         setUpDrawerLayout();
     }
+    private void setUpNavMenu(){
+        Menu menu = binding.navViewBrowse.getMenu();
+        SubMenu subMenu = menu.addSubMenu(0, 1, Menu.NONE, "Media Renderers");
+        populateMediaRenderers(subMenu);
 
+    }
+
+    private void populateMediaRenderers(SubMenu subMenu) {
+        browseViewModel.getMediaRenderers()
+                .subscribeOn(Schedulers.io())
+                .observeOn(AndroidSchedulers.mainThread())
+                .map(device -> device.getDetails().getFriendlyName())
+                .subscribe(subMenu::add);
+    }
     private void setUpDrawerLayout() {
         ActionBarDrawerToggle toggle = new ActionBarDrawerToggle(
                 this, binding.drawerLayoutBrowse, binding.toolbarBrowse, R.string.navigation_drawer_open, R.string.navigation_drawer_close);
         binding.drawerLayoutBrowse.addDrawerListener(toggle);
         toggle.syncState();
-        getMediaRenderers();
+        //getMediaRenderers();
         binding.navViewBrowse.setNavigationItemSelectedListener(this);
         binding.drawerLayoutBrowse.openDrawer(GravityCompat.START);
     }

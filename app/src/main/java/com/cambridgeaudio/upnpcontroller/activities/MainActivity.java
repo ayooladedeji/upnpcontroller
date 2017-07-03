@@ -21,6 +21,7 @@ import com.cambridgeaudio.upnpcontroller.Application;
 import com.cambridgeaudio.upnpcontroller.R;
 import com.cambridgeaudio.upnpcontroller.databinding.ActivityMainBinding;
 import com.cambridgeaudio.upnpcontroller.dialogs.LoadingDialog;
+import com.cambridgeaudio.upnpcontroller.recyclerbinding.WrapContentLinearLayoutManager;
 import com.cambridgeaudio.upnpcontroller.viewmodels.MainViewModel;
 import com.cambridgeaudio.upnpcontroller.viewmodels.itemviews.DidlViewModel;
 import com.cambridgeaudio.upnpcontroller.recyclerbinding.adapter.ClickHandler;
@@ -65,7 +66,7 @@ public class MainActivity extends AppCompatActivity
         binding = DataBindingUtil.setContentView(this, R.layout.activity_main);
         binding.setMainViewModel(mainViewModel);
         binding.setView(this);
-        binding.didlList.setLayoutManager(new LinearLayoutManager(this));
+        binding.didlList.setLayoutManager(new WrapContentLinearLayoutManager(this));
 
         getApplicationContext().bindService(
                 new Intent(this, AndroidUpnpServiceImpl.class),

@@ -26,6 +26,8 @@ import org.fourthline.cling.support.model.item.MusicTrack;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import io.reactivex.BackpressureStrategy;
 import io.reactivex.Flowable;
@@ -111,7 +113,7 @@ public class MainViewModel extends BaseObservable {
                 Observable.create(e -> {
                     Server server = new Server();
                     String serverName = upnpApi.getSelectedMediaServer().getDetails().getFriendlyName();
-                    String serverAddress = upnpApi.getSelectedMediaServer().getDetails().getPresentationURI().toString();
+                    String serverAddress = upnpApi.getSelectedMediaServer().getDetails().getBaseURL().toString();
                     server.setName(serverName);
                     server.setAddress(serverAddress);
                     server.setWifi(getSSID());
@@ -121,13 +123,25 @@ public class MainViewModel extends BaseObservable {
         compositeDisposable.add(d);
     }
 
+    private String getBaseURL(String s){
+//        String regex = ".*\\s://\\\\d{1,3}(?:\\\\.\\\\d{1,3}){3}(?::\\\\d{1,5}).*";
+////        String[] parts = s.split(regex);
+////        return parts[1];
+//
+//        Pattern pattern = Pattern.compile(regex);
+//        Matcher matcher = pattern.matcher(s);
+//        return matcher.group(1);
+        String[] parts = s.split("/");
+        return parts[0] + "//" + parts[2] + "/";
+    }
+
     public void cacheCurrentDirectory() {
         long currentTime = System.currentTimeMillis();
         String directoryId = objectIdList.get(objectIdList.size() - 1);
         viewController.showProgressDialog(null, "Caching directory...");
         Log.d(TAG, "Cache started");
         final int[] counter = {0};
-        addServer();
+        final boolean[] isFirst = {true};
         upnpApi.scan(directoryId)
                 .timeout(15, TimeUnit.SECONDS, Flowable.create(e -> {
                     Log.d(TAG, "Cache complete");
@@ -135,6 +149,18 @@ public class MainViewModel extends BaseObservable {
                     sendReport(System.currentTimeMillis() - currentTime, counter[0]);
                 }, BackpressureStrategy.BUFFER))
                 .subscribe(didlObject -> {
+
+                    if (isFirst[0]){
+                        Server server = new Server();
+                        String serverName = upnpApi.getSelectedMediaServer().getDetails().getFriendlyName();
+                        String serverAddress = getBaseURL(didlObject.getFirstResource().getValue());
+                        server.setName(serverName);
+                        server.setAddress(serverAddress);
+                        server.setWifi(getSSID());
+                        appDatabase.serverDao().insert(server);
+                        Log.d(TAG, "added Server: " + server.getName());
+                        isFirst[0] = false;
+                    }
 
                     Log.d(TAG, "didlObject isntance of" + (didlObject instanceof MusicTrack ? "MusicTrack" : "AudioItem"));
 

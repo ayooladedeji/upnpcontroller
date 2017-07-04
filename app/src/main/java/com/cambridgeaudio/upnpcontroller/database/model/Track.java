@@ -82,12 +82,12 @@ public class Track {
 
 
     private static String createMediaPath(String s) throws MalformedURLException {
-//        String regex = "http?://\\b\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}\\b:\\d{1,4}/";
-//        String[] parts = s.split(regex);
-//        return parts[1];
+        String regex = "http?://\\b\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}\\b:\\d{1,4}/";
+        String[] parts = s.split(regex);
+        return parts[1];
 
-        URL url = new URL(s);
-        return url.getPath().substring(1);
+//        URL url = new URL(s);
+//        return url.getPath().substring(1);
     }
 
     public static Track create(DIDLObject didlObject, String serverName, long albumId, long artistId) throws MalformedURLException {

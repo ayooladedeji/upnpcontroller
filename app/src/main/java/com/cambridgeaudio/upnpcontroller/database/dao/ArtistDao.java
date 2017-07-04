@@ -4,6 +4,7 @@ import android.arch.persistence.room.Dao;
 import android.arch.persistence.room.Insert;
 import android.arch.persistence.room.Query;
 import com.cambridgeaudio.upnpcontroller.database.model.Artist;
+import com.cambridgeaudio.upnpcontroller.database.model.Track;
 import com.cambridgeaudio.upnpcontroller.database.model.relations.ArtistWithAlbums;
 import com.cambridgeaudio.upnpcontroller.database.model.relations.ArtistWithTracks;
 
@@ -40,6 +41,9 @@ public interface ArtistDao {
 
     @Query("select * from artists where id =:id")
     Artist getById(int id);
+
+    @Query("select * from artists limit :limit")
+    List<Artist> getAllWithLimit(int limit);
 
     @Insert(onConflict = REPLACE)
     long[] insert(Artist... artists);

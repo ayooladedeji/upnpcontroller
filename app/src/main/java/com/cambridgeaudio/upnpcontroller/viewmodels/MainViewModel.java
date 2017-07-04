@@ -76,9 +76,19 @@ public class MainViewModel extends BaseObservable {
 
     public void selectMediaServer(String name) {
 
+//        upnpApi.getMediaServers()
+//                .distinct()
+//                .filter(d -> name.equals(d.getDetails().getFriendlyName()))
+//                .subscribe(device -> {
+//                    Log.d("SERVER", "CLICKED");
+//                    upnpApi.selectMediaServer(device);
+//                    browse("0");
+//                });
         upnpApi.getMediaServersAsList()
-                .observeOn(AndroidSchedulers.mainThread())
+                //.observeOn(AndroidSchedulers.mainThread())
+
                 .subscribe(devices -> {
+                    Log.d("SERVER", "CLICKED");
                     devices.stream().filter(d -> name.equals(d.getDetails().getFriendlyName())).forEach(d -> upnpApi.selectMediaServer(d));
                     browse("0");
                 });
@@ -93,7 +103,7 @@ public class MainViewModel extends BaseObservable {
                 .timeout(2, TimeUnit.SECONDS, Flowable.create(e -> {
                     viewController.dismissProgressDialog();
                 }, BackpressureStrategy.BUFFER))
-                .observeOn(AndroidSchedulers.mainThread())
+                //.observeOn(AndroidSchedulers.mainThread())
                 .subscribe(didlObject -> didlList.add(new DidlViewModel(didlObject)));
     }
 

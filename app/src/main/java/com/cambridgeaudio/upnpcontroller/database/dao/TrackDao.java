@@ -20,6 +20,9 @@ public interface TrackDao {
     @Query("select * from tracks")
     List<Track> getAll();
 
+    @Query("select * from tracks limit :limit")
+    List<Track> getAllWithLimit(int limit);
+
     //todo add percentage signs
     @Query("select * from tracks where track_title  like :trackTitle")
     List<Track> getAllByTitle(String trackTitle);

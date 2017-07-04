@@ -83,8 +83,8 @@ public class BrowseActivity extends AppCompatActivity
         binding.artistList.setLayoutManager(new WrapContentLinearLayoutManager(this));
 
         setSupportActionBar(binding.toolbarBrowse);
-        //showTrackList();
-        //browseViewModel.getInitialList();
+        showTrackList();
+        browseViewModel.getInitialList();
         setUpNavMenu();
         setUpDrawerLayout();
     }

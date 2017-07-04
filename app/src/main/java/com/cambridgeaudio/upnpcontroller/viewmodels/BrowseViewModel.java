@@ -144,7 +144,7 @@ public class BrowseViewModel extends BaseObservable {
 
         Disposable d =
                 Observable.create(e -> {
-                    for (Track track : appDatabase.trackDao().getAll())
+                    for (Track track : appDatabase.trackDao().getAllWithLimit(10))
                         trackList.add(new TrackViewModel(track));
 
                     if (trackList.isEmpty())
@@ -153,7 +153,7 @@ public class BrowseViewModel extends BaseObservable {
 
         Disposable d1 =
                 Observable.create(e -> {
-                    for (Album album : appDatabase.albumDao().getAll())
+                    for (Album album : appDatabase.albumDao().getAllWithLimit(10))
                         albumList.add(new AlbumViewModel(album));
 
                     if (albumList.isEmpty())
@@ -162,14 +162,14 @@ public class BrowseViewModel extends BaseObservable {
 
         Disposable d2 =
                 Observable.create(e -> {
-                    for (Artist artist : appDatabase.artistDao().getAll())
+                    for (Artist artist : appDatabase.artistDao().getAllWithLimit(10))
                         artistList.add(new ArtistViewModel(artist));
 
                     if (artistList.isEmpty())
                         artistList.add(new ArtistViewModel(new Artist("EMPTY")));
                 })
                         .subscribeOn(Schedulers.io())
-                        //.observeOn(AndroidSchedulers.mainThread())
+                        .observeOn(AndroidSchedulers.mainThread())
                         .subscribe();
 
         compositeDisposable.addAll(d, d1, d2);

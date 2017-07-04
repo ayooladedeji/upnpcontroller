@@ -86,8 +86,6 @@ public class Track {
         String[] parts = s.split(regex);
         return parts[1];
 
-//        URL url = new URL(s);
-//        return url.getPath().substring(1);
     }
 
     public static Track create(DIDLObject didlObject, String serverName, long albumId, long artistId) throws MalformedURLException {

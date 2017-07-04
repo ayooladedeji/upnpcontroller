@@ -5,6 +5,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.databinding.DataBindingUtil;
 import android.os.Bundle;
+import android.os.Handler;
 import android.support.annotation.NonNull;
 import android.support.design.widget.NavigationView;
 import android.support.v4.view.GravityCompat;
@@ -82,8 +83,8 @@ public class BrowseActivity extends AppCompatActivity
         binding.artistList.setLayoutManager(new WrapContentLinearLayoutManager(this));
 
         setSupportActionBar(binding.toolbarBrowse);
-        showTrackList();
-        browseViewModel.getInitialList();
+        //showTrackList();
+        //browseViewModel.getInitialList();
         setUpNavMenu();
         setUpDrawerLayout();
     }
@@ -100,6 +101,7 @@ public class BrowseActivity extends AppCompatActivity
                 .subscribeOn(Schedulers.io())
                 .observeOn(AndroidSchedulers.mainThread())
                 .map(device -> device.getDetails().getFriendlyName())
+                .distinct()
                 .subscribe(subMenu::add);
     }
     private void setUpDrawerLayout() {
@@ -107,32 +109,10 @@ public class BrowseActivity extends AppCompatActivity
                 this, binding.drawerLayoutBrowse, binding.toolbarBrowse, R.string.navigation_drawer_open, R.string.navigation_drawer_close);
         binding.drawerLayoutBrowse.addDrawerListener(toggle);
         toggle.syncState();
-        //getMediaRenderers();
         binding.navViewBrowse.setNavigationItemSelectedListener(this);
         binding.drawerLayoutBrowse.openDrawer(GravityCompat.START);
     }
 
-    private void getMediaRenderers() {
-        //todo this is not very stable
-        Menu menu = binding.navViewBrowse.getMenu();
-        Set<String> menuItems = new HashSet<>();
-        SubMenu subMenu = menu.addSubMenu(0, 1, Menu.NONE, "Media Renderers");
-        browseViewModel.getMediaRenderers()
-                .timeout(3, TimeUnit.SECONDS, new Observable<Device>() {
-                    @Override
-                    protected void subscribeActual(Observer<? super Device> observer) {
-                        BrowseActivity.this.runOnUiThread(() -> {
-                            for (String s : menuItems) {
-                                subMenu.add(s);
-                            }
-                            //dismissProgressDialog();
-                        });
-                    }
-                })
-                .map(device -> device.getDetails().getFriendlyName())
-                .subscribe(menuItems::add);
-
-    }
 
     @Override
     public void onBackPressed() {
@@ -176,7 +156,11 @@ public class BrowseActivity extends AppCompatActivity
         String itemClicked = item.getTitle().toString();
         switch(itemClicked) {
             case "Servers":
-                BrowseActivity.this.startActivity(new Intent(BrowseActivity.this, MainActivity.class));
+                new Handler().postDelayed(() -> {
+                    Intent intent = new Intent(BrowseActivity.this, MainActivity.class);
+                    startActivity(intent);
+                    finish();
+                }, 250);
                 break;
             default:
                 browseViewModel.selectMediaRenderer(item.getTitle().toString());

@@ -3,6 +3,7 @@ package com.cambridgeaudio.upnpcontroller.activities;
 import android.content.Context;
 import android.content.Intent;
 import android.databinding.DataBindingUtil;
+import android.os.Handler;
 import android.support.annotation.NonNull;
 import android.support.design.widget.NavigationView;
 import android.support.v4.view.GravityCompat;
@@ -92,6 +93,7 @@ public class MainActivity extends AppCompatActivity
                 .subscribeOn(Schedulers.io())
                 .observeOn(AndroidSchedulers.mainThread())
                 .map(device -> device.getDetails().getFriendlyName())
+                .distinct()
                 .subscribe(subMenu::add);
     }
 
@@ -100,33 +102,8 @@ public class MainActivity extends AppCompatActivity
                 this, binding.drawerLayout, binding.toolbar, R.string.navigation_drawer_open, R.string.navigation_drawer_close);
         binding.drawerLayout.addDrawerListener(toggle);
         toggle.syncState();
-        //getMediaServers();
         binding.navView.setNavigationItemSelectedListener(this);
         binding.drawerLayout.openDrawer(GravityCompat.START);
-    }
-
-    private void getMediaServers() {
-        //todo this is not very stable
-        Menu menu = binding.navView.getMenu();
-        Set<String> menuItems = new HashSet<>();
-
-        menu.add("Browse");
-        SubMenu subMenu = menu.addSubMenu(0, 1, Menu.NONE, "Media Servers");
-        mainViewModel.getMediaServers()
-                .timeout(3, TimeUnit.SECONDS, new Observable<Device>() {
-                    @Override
-                    protected void subscribeActual(Observer<? super Device> observer) {
-                        MainActivity.this.runOnUiThread(() -> {
-                            for (String s : menuItems) {
-                                subMenu.add(s);
-                            }
-                            dismissProgressDialog();
-                        });
-                    }
-                })
-                .map(device -> device.getDetails().getFriendlyName())
-                .subscribe(menuItems::add);
-
     }
 
     @Override
@@ -162,14 +139,17 @@ public class MainActivity extends AppCompatActivity
         String itemClicked = item.getTitle().toString();
         switch(itemClicked) {
             case "Browse":
-                MainActivity.this.startActivity(new Intent(MainActivity.this, BrowseActivity.class));
+                new Handler().postDelayed(() -> {
+                    Intent intent = new Intent(MainActivity.this, BrowseActivity.class);
+                    startActivity(intent);
+                    finish();
+                }, 250);
                 break;
             default:
                 mainViewModel.selectMediaServer(item.getTitle().toString());
                 break;
         }
-        DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
-        drawer.closeDrawer(GravityCompat.START);
+        binding.drawerLayout.closeDrawer(GravityCompat.START);
         return true;
     }
 

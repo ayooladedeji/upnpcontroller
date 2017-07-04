@@ -124,13 +124,6 @@ public class MainViewModel extends BaseObservable {
     }
 
     private String getBaseURL(String s){
-//        String regex = ".*\\s://\\\\d{1,3}(?:\\\\.\\\\d{1,3}){3}(?::\\\\d{1,5}).*";
-////        String[] parts = s.split(regex);
-////        return parts[1];
-//
-//        Pattern pattern = Pattern.compile(regex);
-//        Matcher matcher = pattern.matcher(s);
-//        return matcher.group(1);
         String[] parts = s.split("/");
         return parts[0] + "//" + parts[2] + "/";
     }

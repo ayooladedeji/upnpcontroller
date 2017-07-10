@@ -11,7 +11,6 @@ import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.ActionBarDrawerToggle;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
-import android.support.v7.widget.LinearLayoutManager;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -19,7 +18,7 @@ import android.view.SubMenu;
 import android.view.View;
 import android.widget.Toast;
 
-import com.cambridgeaudio.upnpcontroller.Application;
+import com.cambridgeaudio.upnpcontroller.MyApplication;
 import com.cambridgeaudio.upnpcontroller.R;
 import com.cambridgeaudio.upnpcontroller.databinding.ActivityMainBinding;
 import com.cambridgeaudio.upnpcontroller.dialogs.LoadingDialog;
@@ -34,17 +33,10 @@ import com.cambridgeaudio.upnpcontroller.recyclerbinding.binder.DidlObjectBinder
 import com.crashlytics.android.Crashlytics;
 
 import io.fabric.sdk.android.Fabric;
-import io.reactivex.Observable;
-import io.reactivex.Observer;
 import io.reactivex.android.schedulers.AndroidSchedulers;
 import io.reactivex.schedulers.Schedulers;
 
 import org.fourthline.cling.android.AndroidUpnpServiceImpl;
-import org.fourthline.cling.model.meta.Device;
-
-import java.util.HashSet;
-import java.util.Set;
-import java.util.concurrent.TimeUnit;
 
 public class MainActivity extends AppCompatActivity
         implements NavigationView.OnNavigationItemSelectedListener, MainViewModel.ViewController {
@@ -61,8 +53,8 @@ public class MainActivity extends AppCompatActivity
         mainViewModel =
                 new MainViewModel(
                         this,
-                        ((Application) this.getApplication()).getUpnpApi(),
-                        ((Application) this.getApplication()).getAppDatabase(),
+                        ((MyApplication) this.getApplication()).getUpnpApi(),
+                        ((MyApplication) this.getApplication()).getAppDatabase(),
                         this);
 
         binding = DataBindingUtil.setContentView(this, R.layout.activity_main);
@@ -174,8 +166,8 @@ public class MainActivity extends AppCompatActivity
 
 
     @Override
-    public void showProgressDialog(String title, String message) {
-        LoadingDialog.show(this, title, message, false);
+    public void showProgressDialog(String title, String message, boolean cancelable) {
+        LoadingDialog.show(this, title, message, cancelable);
     }
 
     @Override

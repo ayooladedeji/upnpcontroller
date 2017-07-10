@@ -28,6 +28,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 
+import io.reactivex.Flowable;
 import io.reactivex.Observable;
 import io.reactivex.android.schedulers.AndroidSchedulers;
 import io.reactivex.disposables.CompositeDisposable;
@@ -67,7 +68,12 @@ public class BrowseViewModel extends BaseObservable {
     public void registerSearchView(SearchView searchView) {
         compositeDisposable.add(RxSearchView.queryTextChangeEvents(searchView)
                 .debounce(400, TimeUnit.MILLISECONDS) // default Scheduler is Computation
-                .filter(changes -> !Objects.equals(changes.queryText().toString().trim(), ""))
+                //
+                // .subscribeOn(Schedulers.io())
+                .filter(changes -> changes.queryText().toString().trim() != "")
+                //
+
+                .observeOn(AndroidSchedulers.mainThread())
                 .subscribeWith(searchObserver()));
 
     }
@@ -85,33 +91,39 @@ public class BrowseViewModel extends BaseObservable {
                 albumList.clear();
                 artistList.clear();
 
-                Disposable d =
-                        Observable.create(e -> {
-                            for (Track track : appDatabase.trackDao().getAllByTitle(query))
+                Disposable d = appDatabase
+                        .trackDao().getAllByTitle(query)
+                        .subscribeOn(Schedulers.io())
+                        .observeOn(AndroidSchedulers.mainThread())
+                        .subscribe(tracks -> {
+                            for (Track track : tracks)
                                 trackList.add(new TrackViewModel(track));
 
                             if (trackList.isEmpty())
                                 viewController.hideTrackList();
                             else
                                 viewController.showTrackList();
+                        });
 
-                        }).subscribeOn(Schedulers.io()).subscribe();
-
-                Disposable d1 =
-                        Observable.create(e -> {
-                            for (Album album : appDatabase.albumDao().getByTitle(query))
+                Disposable d1 = appDatabase.albumDao().getByTitle(query)
+                        .subscribeOn(Schedulers.io())
+                        .observeOn(AndroidSchedulers.mainThread())
+                        .subscribe(albums -> {
+                            for (Album album : albums)
                                 albumList.add(new AlbumViewModel(album));
 
                             if (albumList.isEmpty())
                                 viewController.hideAlbumList();
                             else
                                 viewController.showAlbumList();
+                        });
 
-                        }).subscribeOn(Schedulers.io()).subscribe();
 
-                Disposable d2 =
-                        Observable.create(e -> {
-                            for (Artist artist : appDatabase.artistDao().getAll())
+                Disposable d2 = appDatabase.artistDao().getByName(query)
+                        .subscribeOn(Schedulers.io())
+                        .observeOn(AndroidSchedulers.mainThread())
+                        .subscribe(artists -> {
+                            for (Artist artist : artists)
                                 artistList.add(new ArtistViewModel(artist));
 
                             if (artistList.isEmpty())
@@ -119,15 +131,14 @@ public class BrowseViewModel extends BaseObservable {
                             else
                                 viewController.showArtistList();
 
-                        }).subscribeOn(Schedulers.io()).subscribe();
-
+                        });
                 compositeDisposable.addAll(d, d1, d2);
 
             }
 
             @Override
             public void onError(Throwable e) {
-                Log.d(TAG, e.getMessage());
+                Log.e(TAG, e.getMessage());
                 Crashlytics.logException(e);
                 viewController.showDialog("Error", "Could not load music", true);
             }
@@ -143,68 +154,74 @@ public class BrowseViewModel extends BaseObservable {
     public void getInitialList() {
 
         Disposable d =
-                Observable.create(e -> {
-                    for (Track track : appDatabase.trackDao().getAllWithLimit(10))
-                        trackList.add(new TrackViewModel(track));
-
-                    if (trackList.isEmpty())
-                        trackList.add(new TrackViewModel(new Track("EMPTY")));
-                }).subscribeOn(Schedulers.io()).subscribe();
-
-        Disposable d1 =
-                Observable.create(e -> {
-                    for (Album album : appDatabase.albumDao().getAllWithLimit(10))
-                        albumList.add(new AlbumViewModel(album));
-
-                    if (albumList.isEmpty())
-                        albumList.add(new AlbumViewModel(new Album("EMPTY")));
-                }).subscribeOn(Schedulers.io()).subscribe();
-
-        Disposable d2 =
-                Observable.create(e -> {
-                    for (Artist artist : appDatabase.artistDao().getAllWithLimit(10))
-                        artistList.add(new ArtistViewModel(artist));
-
-                    if (artistList.isEmpty())
-                        artistList.add(new ArtistViewModel(new Artist("EMPTY")));
-                })
+                appDatabase.trackDao().getAllWithLimit(10)
                         .subscribeOn(Schedulers.io())
                         .observeOn(AndroidSchedulers.mainThread())
-                        .subscribe();
+                        .subscribe(tracks -> {
+                            for (Track track : tracks)
+                                trackList.add(new TrackViewModel(track));
+
+                            if (trackList.isEmpty())
+                                trackList.add(new TrackViewModel(new Track("EMPTY")));
+                        });
+
+        Disposable d1 =
+                appDatabase.albumDao().getAllWithLimit(10)
+                        .subscribeOn(Schedulers.io())
+                        .observeOn(AndroidSchedulers.mainThread())
+                        .subscribe(albums -> {
+                            for (Album album : albums)
+                                albumList.add(new AlbumViewModel(album));
+
+                            if (albumList.isEmpty())
+                                albumList.add(new AlbumViewModel(new Album("EMPTY")));
+                        });
+
+        Disposable d2 =
+                appDatabase.artistDao().getAllWithLimit(10)
+                        .subscribeOn(Schedulers.io())
+                        .observeOn(AndroidSchedulers.mainThread())
+                        .subscribe(artists -> {
+                            for (Artist artist : artists)
+                                artistList.add(new ArtistViewModel(artist));
+
+                            if (artistList.isEmpty())
+                                artistList.add(new ArtistViewModel(new Artist("EMPTY")));
+                        });
 
         compositeDisposable.addAll(d, d1, d2);
     }
 
     public void onContainerClick(long id, String container) {
-        Disposable d =
-                Observable.create(e -> {
-                    List<Track> tracks = new ArrayList<>();
 
-                    switch (container) {
-                        case "artist":
-                            tracks = appDatabase.trackDao().getAllByArtistId(id);
-                            break;
-                        case "album":
-                            tracks = appDatabase.trackDao().getAllByAlbumId(id);
-                            break;
+        Flowable<List<Track>> flowable = null;
+        switch (container) {
+            case "artist":
+                flowable = appDatabase.trackDao().getAllByArtistId(id);
+                break;
+            case "album":
+                flowable = appDatabase.trackDao().getAllByAlbumId(id);
+                break;
 
-                    }
-                    trackList.clear();
-                    for (Track track : tracks)
-                        trackList.add(new TrackViewModel(track));
+        }
+        if (flowable != null) {
+            Disposable d1 = flowable
+                    .subscribeOn(Schedulers.io())
+                    .subscribe(tracks -> {
+                        for (Track track : tracks)
+                            trackList.add(new TrackViewModel(track));
 
-                    if (artistList.isEmpty())
-                        trackList.add(new TrackViewModel(new Track("EMPTY")));
+                        if (artistList.isEmpty())
+                            trackList.add(new TrackViewModel(new Track("EMPTY")));
 
-                    viewController.hideArtistList();
-                    viewController.hideAlbumList();
+                        viewController.hideArtistList();
+                        viewController.hideAlbumList();
+                    });
+            compositeDisposable.add(d1);
 
-                })
-                        .subscribeOn(Schedulers.io())
-                        .observeOn(AndroidSchedulers.mainThread())
-                        .subscribe();
+        }
 
-        compositeDisposable.add(d);
+
     }
 
     public Observable<Device> getMediaRenderers() {
@@ -214,8 +231,8 @@ public class BrowseViewModel extends BaseObservable {
     public void selectMediaRenderer(String name) {
 
         upnpApi.getMediaRenderers()
-                .filter(device -> Objects.equals(device.getDetails().getFriendlyName(), name))
-                .subscribe(device ->  upnpApi.selectMediaRenderer(device));
+                .filter(device -> device.getDetails().getFriendlyName() == name)
+                .subscribe(device -> upnpApi.selectMediaRenderer(device));
     }
 
     public void onDestroy() {

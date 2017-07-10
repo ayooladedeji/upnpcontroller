@@ -20,7 +20,7 @@ import android.view.View;
 import android.widget.SearchView;
 import android.widget.Toast;
 
-import com.cambridgeaudio.upnpcontroller.Application;
+import com.cambridgeaudio.upnpcontroller.MyApplication;
 import com.cambridgeaudio.upnpcontroller.BR;
 import com.cambridgeaudio.upnpcontroller.R;
 import com.cambridgeaudio.upnpcontroller.databinding.ActivityBrowseBinding;
@@ -38,16 +38,7 @@ import com.cambridgeaudio.upnpcontroller.viewmodels.itemviews.ArtistViewModel;
 import com.cambridgeaudio.upnpcontroller.viewmodels.itemviews.TrackViewModel;
 import com.crashlytics.android.Crashlytics;
 
-import org.fourthline.cling.Main;
-import org.fourthline.cling.model.meta.Device;
-
-import java.util.HashSet;
-import java.util.Set;
-import java.util.concurrent.TimeUnit;
-
 import io.fabric.sdk.android.Fabric;
-import io.reactivex.Observable;
-import io.reactivex.Observer;
 import io.reactivex.android.schedulers.AndroidSchedulers;
 import io.reactivex.schedulers.Schedulers;
 
@@ -71,8 +62,8 @@ public class BrowseActivity extends AppCompatActivity
         browseViewModel =
                 new BrowseViewModel(
                         this,
-                        ((Application) this.getApplication()).getUpnpApi(),
-                        ((Application) this.getApplication()).getAppDatabase(),
+                        ((MyApplication) this.getApplication()).getUpnpApi(),
+                        ((MyApplication) this.getApplication()).getAppDatabase(),
                         this);
 
         binding = DataBindingUtil.setContentView(this, R.layout.activity_browse);
@@ -203,7 +194,7 @@ public class BrowseActivity extends AppCompatActivity
 
     @Override
     public void showDialog(String title, String message, boolean cancelable) {
-        SimpleDialog.show(this, title, message, false);
+        this.runOnUiThread(() -> SimpleDialog.show(this, title, message, false));
     }
 
     @Override

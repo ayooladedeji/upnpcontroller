@@ -32,6 +32,7 @@ import java.util.regex.Pattern;
 import io.reactivex.BackpressureStrategy;
 import io.reactivex.Flowable;
 import io.reactivex.Observable;
+import io.reactivex.Scheduler;
 import io.reactivex.android.schedulers.AndroidSchedulers;
 import io.reactivex.disposables.CompositeDisposable;
 import io.reactivex.disposables.Disposable;
@@ -66,9 +67,10 @@ public class MainViewModel extends BaseObservable {
                 .getMediaServers();
     }
 
-    public Observable<ArrayList<Device>> getMediaServersAsList(){
+    public Observable<ArrayList<Device>> getMediaServersAsList() {
         return upnpApi.getMediaServersAsList();
     }
+
     public ServiceConnection getServiceConnection() {
         return upnpApi.getServiceConnection();
     }
@@ -85,25 +87,30 @@ public class MainViewModel extends BaseObservable {
 //                    browse("0");
 //                });
         upnpApi.getMediaServersAsList()
-                //.observeOn(AndroidSchedulers.mainThread())
-
+                .observeOn(AndroidSchedulers.mainThread())
+                //.subscribeOn(Schedulers.io())
                 .subscribe(devices -> {
                     Log.d("SERVER", "CLICKED");
-                    devices.stream().filter(d -> name.equals(d.getDetails().getFriendlyName())).forEach(d -> upnpApi.selectMediaServer(d));
+                    for (Device d : devices) {
+                        if (name.equals(d.getDetails().getFriendlyName()))
+                            upnpApi.selectMediaServer(d);
+                    }
+                    //devices.stream().filter(d -> name.equals(d.getDetails().getFriendlyName())).forEach(d -> upnpApi.selectMediaServer(d));
                     browse("0");
                 });
 
     }
 
     public void browse(String id) {
-        viewController.showProgressDialog(null, "loading directory...");
+        //viewController.showProgressDialog(null, "loading directory...");
         objectIdList.add(id);
         this.didlList.clear();
         upnpApi.browse(id)
                 .timeout(2, TimeUnit.SECONDS, Flowable.create(e -> {
-                    viewController.dismissProgressDialog();
+                    //viewController.dismissProgressDialog();
                 }, BackpressureStrategy.BUFFER))
-                //.observeOn(AndroidSchedulers.mainThread())
+                //.subscribeOn(Schedulers.io())
+                .observeOn(AndroidSchedulers.mainThread())
                 .subscribe(didlObject -> didlList.add(new DidlViewModel(didlObject)));
     }
 
@@ -133,7 +140,7 @@ public class MainViewModel extends BaseObservable {
         compositeDisposable.add(d);
     }
 
-    private String getBaseURL(String s){
+    private String getBaseURL(String s) {
         String[] parts = s.split("/");
         return parts[0] + "//" + parts[2] + "/";
     }
@@ -141,7 +148,7 @@ public class MainViewModel extends BaseObservable {
     public void cacheCurrentDirectory() {
         long currentTime = System.currentTimeMillis();
         String directoryId = objectIdList.get(objectIdList.size() - 1);
-        viewController.showProgressDialog(null, "Caching directory...");
+        viewController.showProgressDialog(null, "Caching directory...", false);
         Log.d(TAG, "Cache started");
         final int[] counter = {0};
         final boolean[] isFirst = {true};
@@ -153,7 +160,7 @@ public class MainViewModel extends BaseObservable {
                 }, BackpressureStrategy.BUFFER))
                 .subscribe(didlObject -> {
 
-                    if (isFirst[0]){
+                    if (isFirst[0]) {
                         Server server = new Server();
                         String serverName = upnpApi.getSelectedMediaServer().getDetails().getFriendlyName();
                         String serverAddress = getBaseURL(didlObject.getFirstResource().getValue());
@@ -187,23 +194,27 @@ public class MainViewModel extends BaseObservable {
                 }, throwable -> {
                     Log.d(TAG, throwable.getMessage());
                     Crashlytics.logException(throwable);
+                    viewController.dismissProgressDialog();
+                    viewController.showProgressDialog("Error", "Failed to cache your directory", true);
                 });
     }
 
 
     //todo handle cases where wifi is not connected?
     private String getSSID() {
-        WifiManager wifiManager = (WifiManager) context.getSystemService(Context.WIFI_SERVICE);
+        WifiManager wifiManager = (WifiManager) context.getApplicationContext().getSystemService(Context.WIFI_SERVICE);
         WifiInfo info = wifiManager.getConnectionInfo();
         return info.getSSID();
     }
 
     //todo
     private void sendReport(long duration, int tracksScanned) {
+        long seconds = TimeUnit.MILLISECONDS.toSeconds(duration);
         Disposable d =
                 Observable.create(e -> Answers.getInstance().logCustom(new CustomEvent("Cache Report")
+                        .putCustomAttribute("Elements per second", tracksScanned / seconds)
                         .putCustomAttribute("Tracks scanned", tracksScanned)
-                        .putCustomAttribute("Time elapsed", TimeUnit.MILLISECONDS.toSeconds(duration)))).subscribeOn(Schedulers.io()).subscribe();
+                        .putCustomAttribute("Time elapsed", seconds))).subscribeOn(Schedulers.io()).subscribe();
         compositeDisposable.add(d);
 
     }
@@ -213,7 +224,7 @@ public class MainViewModel extends BaseObservable {
     }
 
     public interface ViewController {
-        void showProgressDialog(String title, String message);
+        void showProgressDialog(String title, String message, boolean cancelable);
 
         void dismissProgressDialog();
     }

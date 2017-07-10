@@ -98,11 +98,15 @@ public class UpnpApiImpl implements UpnpApi {
 
     @Override
     public Flowable<DIDLObject> browse(String id) {
-        return Flowable.create(e -> controlPoint.execute(new Browse(selectedMediaServer.findService(new UDAServiceType("ContentDirectory")), id, BrowseFlag.DIRECT_CHILDREN, "*", 0, null, new SortCriterion(true, "dc:title")) {
+        return Flowable.create(e -> controlPoint.execute(new Browse(selectedMediaServer.findService(new UDAServiceType("ContentDirectory")), id, BrowseFlag.DIRECT_CHILDREN, "*", 0, 50L, new SortCriterion(true, "dc:title")) {
             @Override
             public void received(ActionInvocation actionInvocation, DIDLContent didl) {
-                didl.getContainers().forEach(e::onNext);
-                didl.getItems().forEach(e::onNext);
+                for(DIDLObject didlObject : didl.getContainers())
+                    e.onNext(didlObject);
+
+                for(DIDLObject didlObject : didl.getItems())
+                    e.onNext(didlObject);
+
             }
 
             @Override
@@ -340,12 +344,12 @@ public class UpnpApiImpl implements UpnpApi {
         }
 
         void deviceRemoved(final Device device) {
-            if (Objects.equals(device.getType().getType(), "MediaServer")) {
+            if (device.getType().getType() == "MediaServer") {
                 Log.d(TAG, "Removed device: " + device.getDetails().getFriendlyName());
                 mediaServers.remove(device);
                 mediaServerListSubject.onNext(mediaServers);
             }
-            else if (Objects.equals(device.getType().getType(), "MediaRenderer")) {
+            else if (device.getType().getType() == "MediaRenderer") {
                 mediaRenderers.remove(device);
                 mediaRendererListSubject.onNext(mediaRenderers);
             }

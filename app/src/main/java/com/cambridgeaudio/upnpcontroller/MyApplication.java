@@ -1,5 +1,6 @@
 package com.cambridgeaudio.upnpcontroller;
 
+import android.app.Application;
 import android.support.multidex.MultiDexApplication;
 
 import com.cambridgeaudio.upnpcontroller.database.AppDatabase;
@@ -10,7 +11,7 @@ import com.cambridgeaudio.upnpcontroller.upnp.UpnpApiImpl;
  * Created by Ayo on 28/06/2017.
  */
 
-public class Application extends MultiDexApplication {
+public class MyApplication extends MultiDexApplication {
 
     private UpnpApi upnpApi = null;
     private AppDatabase appDatabase = null;

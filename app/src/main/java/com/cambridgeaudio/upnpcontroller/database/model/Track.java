@@ -82,7 +82,7 @@ public class Track {
 
 
     private static String createMediaPath(String s) throws MalformedURLException {
-        String regex = "http?://\\b\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}\\b:\\d{1,4}/";
+        String regex = "http?://\\b\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}\\b:\\d{1,5}/";
         String[] parts = s.split(regex);
         return parts[1];
 

@@ -152,14 +152,16 @@ public class MainViewModel extends BaseObservable {
         Log.d(TAG, "Cache started");
         final int[] counter = {0};
         final boolean[] isFirst = {true};
-        upnpApi.scan(directoryId)
-                .timeout(15, TimeUnit.SECONDS, Flowable.create(e -> {
+        upnpApi.scan1(directoryId, 0, 100)
+                .retry()
+                .timeout(2, TimeUnit.SECONDS, Flowable.create(e -> {
                     Log.d(TAG, "Cache complete");
                     viewController.dismissProgressDialog();
                     sendReport(System.currentTimeMillis() - currentTime, counter[0]);
                 }, BackpressureStrategy.BUFFER))
                 .subscribe(didlObject -> {
 
+                    viewController.setDialogMessage(didlObject.getTitle());
                     if (isFirst[0]) {
                         Server server = new Server();
                         String serverName = upnpApi.getSelectedMediaServer().getDetails().getFriendlyName();
@@ -178,12 +180,14 @@ public class MainViewModel extends BaseObservable {
                     albumId = artistId = -1L;
 
                     if (didlObject instanceof MusicTrack) {
-                        artistId = appDatabase.artistDao().insert(new Artist(((MusicTrack) didlObject).getFirstArtist().getName()))[0];
-                        Log.d(TAG, "Added Artist to database: " + ((MusicTrack) didlObject).getFirstArtist().getName());
+                        String artistName = ((MusicTrack) didlObject).getFirstArtist().getName() != null ? ((MusicTrack) didlObject).getFirstArtist().getName() : "unknown";
+                        artistId = appDatabase.artistDao().insert(new Artist(artistName))[0];
+                        Log.d(TAG, "Added Artist to database: " + artistName);
 
                         if (((MusicTrack) didlObject).getAlbum() != null) {
-                            albumId = appDatabase.albumDao().insert(new Album(((MusicTrack) didlObject).getAlbum(), artistId))[0];
-                            Log.d(TAG, "Added Album to database: " + ((MusicTrack) didlObject).getAlbum());
+                            String albumName = ((MusicTrack) didlObject).getAlbum() != null ? ((MusicTrack) didlObject).getAlbum() : "unknown";
+                            albumId = appDatabase.albumDao().insert(new Album(albumName, artistId))[0];
+                            Log.d(TAG, "Added Album to database: " + albumName);
                         }
                     }
 
@@ -195,7 +199,7 @@ public class MainViewModel extends BaseObservable {
                     Log.d(TAG, throwable.getMessage());
                     Crashlytics.logException(throwable);
                     viewController.dismissProgressDialog();
-                    viewController.showProgressDialog("Error", "Failed to cache your directory", true);
+                    viewController.showErrorDialog("Error", "Failed to cache your directory", true);
                 });
     }
 
@@ -225,7 +229,8 @@ public class MainViewModel extends BaseObservable {
 
     public interface ViewController {
         void showProgressDialog(String title, String message, boolean cancelable);
-
+        void setDialogMessage(String s);
         void dismissProgressDialog();
+        void showErrorDialog(String title, String message, boolean cancelable);
     }
 }

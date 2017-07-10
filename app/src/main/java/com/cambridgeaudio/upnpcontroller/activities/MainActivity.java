@@ -22,6 +22,7 @@ import com.cambridgeaudio.upnpcontroller.MyApplication;
 import com.cambridgeaudio.upnpcontroller.R;
 import com.cambridgeaudio.upnpcontroller.databinding.ActivityMainBinding;
 import com.cambridgeaudio.upnpcontroller.dialogs.LoadingDialog;
+import com.cambridgeaudio.upnpcontroller.dialogs.SimpleDialog;
 import com.cambridgeaudio.upnpcontroller.recyclerbinding.WrapContentLinearLayoutManager;
 import com.cambridgeaudio.upnpcontroller.viewmodels.MainViewModel;
 import com.cambridgeaudio.upnpcontroller.viewmodels.itemviews.DidlViewModel;
@@ -167,12 +168,22 @@ public class MainActivity extends AppCompatActivity
 
     @Override
     public void showProgressDialog(String title, String message, boolean cancelable) {
-        LoadingDialog.show(this, title, message, cancelable);
+        this.runOnUiThread(() -> LoadingDialog.show(this, title, message, cancelable));
+    }
+
+    @Override
+    public void setDialogMessage(String s) {
+        this.runOnUiThread(() -> LoadingDialog.setMessage(s));
     }
 
     @Override
     public void dismissProgressDialog() {
         LoadingDialog.dismiss();
+    }
+
+    @Override
+    public void showErrorDialog(String title, String message, boolean cancelable) {
+        SimpleDialog.show(this, title, message, cancelable);
     }
 
     @Override

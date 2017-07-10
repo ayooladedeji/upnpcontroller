@@ -30,5 +30,10 @@ public class LoadingDialog {
             dialog.dismiss();
     }
 
+    public static void setMessage(String message){
+        if (dialog != null)
+            dialog.setMessage(message);
+    }
+
 
 }

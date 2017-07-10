@@ -29,6 +29,7 @@ import org.fourthline.cling.support.model.container.Container;
 import org.fourthline.cling.support.model.item.AudioItem;
 
 import java.util.ArrayList;
+import java.util.List;
 import java.util.Objects;
 
 import io.reactivex.BackpressureStrategy;
@@ -101,12 +102,35 @@ public class UpnpApiImpl implements UpnpApi {
         return Flowable.create(e -> controlPoint.execute(new Browse(selectedMediaServer.findService(new UDAServiceType("ContentDirectory")), id, BrowseFlag.DIRECT_CHILDREN, "*", 0, 50L, new SortCriterion(true, "dc:title")) {
             @Override
             public void received(ActionInvocation actionInvocation, DIDLContent didl) {
-                for(DIDLObject didlObject : didl.getContainers())
+                for (DIDLObject didlObject : didl.getContainers())
                     e.onNext(didlObject);
 
-                for(DIDLObject didlObject : didl.getItems())
+                for (DIDLObject didlObject : didl.getItems())
                     e.onNext(didlObject);
 
+            }
+
+            @Override
+            public void updateStatus(Status status) {
+            }
+
+            @Override
+            public void failure(ActionInvocation invocation, UpnpResponse operation, String defaultMsg) {
+            }
+        }), BackpressureStrategy.BUFFER);
+    }
+
+    @Override
+    public Flowable<List<DIDLObject>> browse1(String id, long start, long count) {
+        return Flowable.create(e -> controlPoint.execute(new Browse(selectedMediaServer.findService(new UDAServiceType("ContentDirectory")), id, BrowseFlag.DIRECT_CHILDREN, "*", start, 200L, new SortCriterion(true, "dc:title")) {
+            @Override
+            public void received(ActionInvocation actionInvocation, DIDLContent didl) {
+                List<DIDLObject> items = new ArrayList<>();
+
+                items.addAll(didl.getContainers());
+                items.addAll(didl.getItems());
+
+                e.onNext(items);
             }
 
             @Override
@@ -132,10 +156,43 @@ public class UpnpApiImpl implements UpnpApi {
     }
 
     @Override
+    public Flowable<DIDLObject> recursiveScan1(String id, long start, long count) {
+        return browse1(id, start, count)
+                .flatMap(didlObjects -> {
+                    if(didlObjects.size() < count){
+                        DIDLObject[] didlArray = new DIDLObject[didlObjects.size()];
+                        didlArray = didlObjects.toArray(didlArray);
+                        return Flowable.fromArray(didlArray);
+                    } else {
+                        DIDLObject[] didlArray = new DIDLObject[didlObjects.size()];
+                        didlArray = didlObjects.toArray(didlArray);
+                        Flowable<DIDLObject> f = Flowable.fromArray(didlArray);
+                        return Flowable.merge(recursiveScan1(id, start, count), f);
+                    }
+                }).retry()
+                .flatMap(didlObject -> {
+                    if(didlObject instanceof Container){
+                        Flowable<DIDLObject>  container = recursiveScan1(didlObject.getId(), start, count);
+                        return Flowable.merge(container, Flowable.just(didlObject));
+                    }else{
+                        return Flowable.just(didlObject);
+                    }
+                }).retry();
+    }
+
+    @Override
     public Flowable<DIDLObject> scan(String id) {
 
         return recursiveScan(id)
                 .subscribeOn(Schedulers.io())
+                .filter(didlObject -> didlObject instanceof AudioItem);
+    }
+
+    @Override
+    public Flowable<DIDLObject> scan1(String id, long start, long count) {
+
+        return recursiveScan1(id, start, count).retry()
+                //.subscribeOn(Schedulers.io())
                 .filter(didlObject -> didlObject instanceof AudioItem);
     }
 
@@ -333,8 +390,7 @@ public class UpnpApiImpl implements UpnpApi {
                 mediaServerSubject.onNext(device);
                 mediaServers.add(device);
                 mediaServerListSubject.onNext(mediaServers);
-            }
-            else if (deviceType.equals("MediaRenderer")) {
+            } else if (deviceType.equals("MediaRenderer")) {
                 Log.d(TAG, "Discovered MediaRenderer: " + deviceName);
                 mediaRendererSubject.onNext(device);
                 mediaRenderers.add(device);
@@ -348,8 +404,7 @@ public class UpnpApiImpl implements UpnpApi {
                 Log.d(TAG, "Removed device: " + device.getDetails().getFriendlyName());
                 mediaServers.remove(device);
                 mediaServerListSubject.onNext(mediaServers);
-            }
-            else if (device.getType().getType() == "MediaRenderer") {
+            } else if (device.getType().getType() == "MediaRenderer") {
                 mediaRenderers.remove(device);
                 mediaRendererListSubject.onNext(mediaRenderers);
             }

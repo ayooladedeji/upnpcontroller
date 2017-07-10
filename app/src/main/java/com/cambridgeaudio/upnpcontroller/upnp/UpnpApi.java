@@ -22,9 +22,15 @@ public interface UpnpApi {
 
     Flowable<DIDLObject> browse(String id);
 
+    Flowable<List<DIDLObject>> browse1(String id, long start, long count);
+
     Flowable<DIDLObject> recursiveScan(String id);
 
+    Flowable<DIDLObject> recursiveScan1(String id, long start, long count);
+
     Flowable<DIDLObject> scan(String id);
+
+    Flowable<DIDLObject> scan1(String id, long start, long count);
 
     Observable<ArrayList<Device>> getMediaServersAsList();
 

@@ -27,7 +27,7 @@ android {
         applicationId "com.cambridgeaudio.upnpcontroller"
         minSdkVersion 17
         targetSdkVersion 25
-        versionCode 3
+        versionCode 4
         versionName "1.0"
         testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
 
@@ -54,6 +54,11 @@ android {
         targetCompatibility 1.8
         sourceCompatibility 1.8
     }
+}
+
+configurations {
+    all*.exclude group: 'com.google.firebase', module: 'firebase-core'
+    all*.exclude group: 'com.google.firebase', module: 'firebase-iid'
 }
 
 dependencies {

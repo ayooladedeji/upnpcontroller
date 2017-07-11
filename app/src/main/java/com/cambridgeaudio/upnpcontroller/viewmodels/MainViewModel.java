@@ -24,15 +24,11 @@ import org.fourthline.cling.model.meta.Device;
 import org.fourthline.cling.support.model.item.MusicTrack;
 
 import java.util.ArrayList;
-import java.util.List;
 import java.util.concurrent.TimeUnit;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 import io.reactivex.BackpressureStrategy;
 import io.reactivex.Flowable;
 import io.reactivex.Observable;
-import io.reactivex.Scheduler;
 import io.reactivex.android.schedulers.AndroidSchedulers;
 import io.reactivex.disposables.CompositeDisposable;
 import io.reactivex.disposables.Disposable;
@@ -156,9 +152,12 @@ public class MainViewModel extends BaseObservable {
                 .retry()
                 .timeout(2, TimeUnit.SECONDS, Flowable.create(e -> {
                     Log.d(TAG, "Cache complete");
-                    viewController.dismissProgressDialog();
                     sendReport(System.currentTimeMillis() - currentTime, counter[0]);
+                    viewController.dismissProgressDialog();
+                    viewController.showDialog("Complete", "your chosen directory has now been indexed, you can view these files in the browse activity ", true);
+
                 }, BackpressureStrategy.BUFFER))
+
                 .subscribe(didlObject -> {
 
                     viewController.setDialogMessage(didlObject.getTitle());
@@ -180,14 +179,18 @@ public class MainViewModel extends BaseObservable {
                     albumId = artistId = -1L;
 
                     if (didlObject instanceof MusicTrack) {
-                        String artistName = ((MusicTrack) didlObject).getFirstArtist().getName() != null ? ((MusicTrack) didlObject).getFirstArtist().getName() : "unknown";
+                        String artistName = "unknown";
+
+                        if (((MusicTrack) didlObject).getFirstArtist() != null)
+                            if (((MusicTrack) didlObject).getFirstArtist().getName() != null)
+                                artistName = ((MusicTrack) didlObject).getFirstArtist().getName();
+
                         artistId = appDatabase.artistDao().insert(new Artist(artistName))[0];
                         Log.d(TAG, "Added Artist to database: " + artistName);
 
                         if (((MusicTrack) didlObject).getAlbum() != null) {
-                            String albumName = ((MusicTrack) didlObject).getAlbum() != null ? ((MusicTrack) didlObject).getAlbum() : "unknown";
-                            albumId = appDatabase.albumDao().insert(new Album(albumName, artistId))[0];
-                            Log.d(TAG, "Added Album to database: " + albumName);
+                            albumId = appDatabase.albumDao().insert(new Album(((MusicTrack) didlObject).getAlbum(), artistId))[0];
+                            Log.d(TAG, "Added Album to database: " + ((MusicTrack) didlObject).getAlbum());
                         }
                     }
 
@@ -199,7 +202,7 @@ public class MainViewModel extends BaseObservable {
                     Log.d(TAG, throwable.getMessage());
                     Crashlytics.logException(throwable);
                     viewController.dismissProgressDialog();
-                    viewController.showErrorDialog("Error", "Failed to cache your directory", true);
+                    viewController.showDialog("Error", "Failed to cache your directory", true);
                 });
     }
 
@@ -229,8 +232,11 @@ public class MainViewModel extends BaseObservable {
 
     public interface ViewController {
         void showProgressDialog(String title, String message, boolean cancelable);
+
         void setDialogMessage(String s);
+
         void dismissProgressDialog();
-        void showErrorDialog(String title, String message, boolean cancelable);
+
+        void showDialog(String title, String message, boolean cancelable);
     }
 }

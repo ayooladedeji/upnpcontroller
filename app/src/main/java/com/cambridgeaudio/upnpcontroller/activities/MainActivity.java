@@ -182,8 +182,8 @@ public class MainActivity extends AppCompatActivity
     }
 
     @Override
-    public void showErrorDialog(String title, String message, boolean cancelable) {
-        SimpleDialog.show(this, title, message, cancelable);
+    public void showDialog(String title, String message, boolean cancelable) {
+        this.runOnUiThread(() -> SimpleDialog.show(this, title, message, cancelable));
     }
 
     @Override

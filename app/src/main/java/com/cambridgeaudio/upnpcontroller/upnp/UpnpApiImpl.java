@@ -122,7 +122,7 @@ public class UpnpApiImpl implements UpnpApi {
 
     @Override
     public Flowable<List<DIDLObject>> browse1(String id, long start, long count) {
-        return Flowable.create(e -> controlPoint.execute(new Browse(selectedMediaServer.findService(new UDAServiceType("ContentDirectory")), id, BrowseFlag.DIRECT_CHILDREN, "*", start, 200L, new SortCriterion(true, "dc:title")) {
+        return Flowable.create(e -> controlPoint.execute(new Browse(selectedMediaServer.findService(new UDAServiceType("ContentDirectory")), id, BrowseFlag.DIRECT_CHILDREN, "*", start, count, new SortCriterion(true, "dc:title")) {
             @Override
             public void received(ActionInvocation actionInvocation, DIDLContent didl) {
                 List<DIDLObject> items = new ArrayList<>();
@@ -172,8 +172,8 @@ public class UpnpApiImpl implements UpnpApi {
                 }).retry()
                 .flatMap(didlObject -> {
                     if(didlObject instanceof Container){
-                        Flowable<DIDLObject>  container = recursiveScan1(didlObject.getId(), start, count);
-                        return Flowable.merge(container, Flowable.just(didlObject));
+                        return recursiveScan1(didlObject.getId(), start, count);
+                        //return Flowable.merge(container, Flowable.just(didlObject));
                     }else{
                         return Flowable.just(didlObject);
                     }
@@ -192,7 +192,7 @@ public class UpnpApiImpl implements UpnpApi {
     public Flowable<DIDLObject> scan1(String id, long start, long count) {
 
         return recursiveScan1(id, start, count).retry()
-                //.subscribeOn(Schedulers.io())
+                .subscribeOn(Schedulers.io())
                 .filter(didlObject -> didlObject instanceof AudioItem);
     }
 

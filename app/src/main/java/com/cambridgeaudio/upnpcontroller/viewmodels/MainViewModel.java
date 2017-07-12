@@ -148,7 +148,7 @@ public class MainViewModel extends BaseObservable {
         Log.d(TAG, "Cache started");
         final int[] counter = {0};
         final boolean[] isFirst = {true};
-        upnpApi.scan1(directoryId, 0, 100)
+        upnpApi.scan1(directoryId, 0, 1000)
                 .retry()
                 .timeout(2, TimeUnit.SECONDS, Flowable.create(e -> {
                     Log.d(TAG, "Cache complete");

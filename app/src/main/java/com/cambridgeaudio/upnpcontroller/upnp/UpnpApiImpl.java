@@ -169,7 +169,7 @@ public class UpnpApiImpl implements UpnpApi {
                         Flowable<DIDLObject> f = Flowable.fromArray(didlArray);
                         return Flowable.merge(recursiveScan1(id, start, count), f);
                     }
-                }).retry()
+                }, 20).retry()
                 .flatMap(didlObject -> {
                     if(didlObject instanceof Container){
                         return recursiveScan1(didlObject.getId(), start, count);

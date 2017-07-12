@@ -69,7 +69,7 @@ public class BrowseViewModel extends BaseObservable {
         compositeDisposable.add(RxSearchView.queryTextChangeEvents(searchView)
                 .debounce(400, TimeUnit.MILLISECONDS) // default Scheduler is Computation
                 //
-                // .subscribeOn(Schedulers.io())
+                //.subscribeOn(Schedulers.io())
                 .filter(changes -> changes.queryText().toString().trim() != "")
                 //
 

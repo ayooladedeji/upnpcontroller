@@ -69,12 +69,12 @@ public class BrowseActivity extends AppCompatActivity
         binding = DataBindingUtil.setContentView(this, R.layout.activity_browse);
         binding.setBrowseViewModel(browseViewModel);
         binding.setBrowseView(this);
-        binding.albumList.setLayoutManager(new WrapContentLinearLayoutManager(this));
         binding.trackList.setLayoutManager(new WrapContentLinearLayoutManager(this));
-        binding.artistList.setLayoutManager(new WrapContentLinearLayoutManager(this));
 
         setSupportActionBar(binding.toolbarBrowse);
         showTrackList();
+        hideAlbumList();
+        hideArtistList();
         browseViewModel.getInitialList();
         setUpNavMenu();
         setUpDrawerLayout();
@@ -130,7 +130,20 @@ public class BrowseActivity extends AppCompatActivity
         }
         if (searchView != null) {
             searchView.setSearchableInfo(searchManager.getSearchableInfo(BrowseActivity.this.getComponentName()));
-            browseViewModel.registerSearchView(searchView);
+            searchView.setOnQueryTextListener(new SearchView.OnQueryTextListener() {
+                @Override
+                public boolean onQueryTextSubmit(String query) {
+                    return false;
+                }
+
+                @Override
+                public boolean onQueryTextChange(String newText) {
+                    final SearchView sv = (SearchView) searchItem.getActionView();
+                    browseViewModel.registerSearchView(sv);
+                    return true;
+                }
+            });
+
         }
         return super.onCreateOptionsMenu(menu);
     }

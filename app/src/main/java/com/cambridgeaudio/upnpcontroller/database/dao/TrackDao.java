@@ -10,6 +10,7 @@ import java.util.List;
 
 import io.reactivex.Flowable;
 
+import static android.arch.persistence.room.OnConflictStrategy.IGNORE;
 import static android.arch.persistence.room.OnConflictStrategy.REPLACE;
 
 /**
@@ -35,6 +36,6 @@ public interface TrackDao {
     @Query("select * from tracks where artist_id = :id")
     Flowable<List<Track>> getAllByArtistId(long id);
 
-    @Insert(onConflict = REPLACE)
-    void insert(Track... tracks);
+    @Insert(onConflict = IGNORE)
+    long[] insert(Track... tracks);
 }

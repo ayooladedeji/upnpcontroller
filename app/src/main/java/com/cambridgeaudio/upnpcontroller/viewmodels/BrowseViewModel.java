@@ -165,31 +165,31 @@ public class BrowseViewModel extends BaseObservable {
                                 trackList.add(new TrackViewModel(new Track("EMPTY")));
                         });
 
-        Disposable d1 =
-                appDatabase.albumDao().getAllWithLimit(10)
-                        .subscribeOn(Schedulers.io())
-                        .observeOn(AndroidSchedulers.mainThread())
-                        .subscribe(albums -> {
-                            for (Album album : albums)
-                                albumList.add(new AlbumViewModel(album));
+//        Disposable d1 =
+//                appDatabase.albumDao().getAllWithLimit(10)
+//                        .subscribeOn(Schedulers.io())
+//                        .observeOn(AndroidSchedulers.mainThread())
+//                        .subscribe(albums -> {
+//                            for (Album album : albums)
+//                                albumList.add(new AlbumViewModel(album));
+//
+//                            if (albumList.isEmpty())
+//                                albumList.add(new AlbumViewModel(new Album("EMPTY")));
+//                        });
 
-                            if (albumList.isEmpty())
-                                albumList.add(new AlbumViewModel(new Album("EMPTY")));
-                        });
+//        Disposable d2 =
+//                appDatabase.artistDao().getAllWithLimit(10)
+//                        .subscribeOn(Schedulers.io())
+//                        .observeOn(AndroidSchedulers.mainThread())
+//                        .subscribe(artists -> {
+//                            for (Artist artist : artists)
+//                                artistList.add(new ArtistViewModel(artist));
+//
+//                            if (artistList.isEmpty())
+//                                artistList.add(new ArtistViewModel(new Artist("EMPTY")));
+//                        });
 
-        Disposable d2 =
-                appDatabase.artistDao().getAllWithLimit(10)
-                        .subscribeOn(Schedulers.io())
-                        .observeOn(AndroidSchedulers.mainThread())
-                        .subscribe(artists -> {
-                            for (Artist artist : artists)
-                                artistList.add(new ArtistViewModel(artist));
-
-                            if (artistList.isEmpty())
-                                artistList.add(new ArtistViewModel(new Artist("EMPTY")));
-                        });
-
-        compositeDisposable.addAll(d, d1, d2);
+        compositeDisposable.addAll(d);
     }
 
     public void onContainerClick(long id, String container) {

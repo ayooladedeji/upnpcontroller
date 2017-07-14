@@ -13,14 +13,14 @@ import static android.arch.persistence.room.ForeignKey.CASCADE;
  * Created by Ayo on 26/06/2017.
  */
 
-@Entity(tableName = "albums"//,
-//        foreignKeys =
-//        @ForeignKey(entity = Artist.class,
-//                parentColumns = "id",
-//                childColumns = "artist_id",
-//                onDelete = CASCADE,
-//                onUpdate = CASCADE), indices = {@Index("artist_id")}
-                )
+@Entity(tableName = "albums",
+        foreignKeys =
+        @ForeignKey(entity = Artist.class,
+                parentColumns = "id",
+                childColumns = "artist_id",
+                onDelete = CASCADE,
+                onUpdate = CASCADE),
+        indices = {@Index("artist_id")})
 public class Album {
 
     @PrimaryKey(autoGenerate = true)

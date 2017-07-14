@@ -11,6 +11,7 @@ import java.util.List;
 
 import io.reactivex.Flowable;
 
+import static android.arch.persistence.room.OnConflictStrategy.IGNORE;
 import static android.arch.persistence.room.OnConflictStrategy.REPLACE;
 
 /**
@@ -20,7 +21,7 @@ import static android.arch.persistence.room.OnConflictStrategy.REPLACE;
 @Dao
 public interface ServerDao {
 
-    @Insert(onConflict = REPLACE)
+    @Insert(onConflict = IGNORE)
     long[] insert(Server... servers);
 
     @Query("select * from servers where name =:name")

@@ -7,6 +7,7 @@ import android.databinding.Bindable;
 import android.databinding.ObservableArrayList;
 import android.net.wifi.WifiInfo;
 import android.net.wifi.WifiManager;
+import android.os.Build;
 import android.util.Log;
 
 import com.cambridgeaudio.upnpcontroller.database.AppDatabase;
@@ -33,6 +34,8 @@ import io.reactivex.android.schedulers.AndroidSchedulers;
 import io.reactivex.disposables.CompositeDisposable;
 import io.reactivex.disposables.Disposable;
 import io.reactivex.schedulers.Schedulers;
+
+import static java.lang.Math.toIntExact;
 
 /**
  * Created by Ayo on 12/06/2017.
@@ -150,9 +153,9 @@ public class MainViewModel extends BaseObservable {
         final boolean[] isFirst = {true};
         upnpApi.scan1(directoryId, 0, 1000)
                 .retry()
-                .timeout(2, TimeUnit.SECONDS, Flowable.create(e -> {
+                .timeout(4, TimeUnit.SECONDS, Flowable.create(e -> {
                     Log.d(TAG, "Cache complete");
-                    sendReport(System.currentTimeMillis() - currentTime, counter[0]);
+                    sendReport(System.currentTimeMillis() - currentTime, counter[0], upnpApi.getSelectedMediaServer().getDetails().getFriendlyName() +", " +upnpApi.getSelectedMediaServer().getDetails().getModelDetails().toString());
                     viewController.dismissProgressDialog();
                     viewController.showDialog("Complete", "your chosen directory has now been indexed, you can view these files in the browse activity ", true);
 
@@ -194,9 +197,13 @@ public class MainViewModel extends BaseObservable {
                         }
                     }
 
-                    appDatabase.trackDao().insert(Track.create(didlObject, upnpApi.getSelectedMediaServer().getDetails().getFriendlyName(), albumId, artistId));
-                    Log.d(TAG, "Added Track to database: " + didlObject.getTitle());
-                    counter[0]++;
+                    long [] row = appDatabase.trackDao().insert(Track.create(didlObject, upnpApi.getSelectedMediaServer().getDetails().getFriendlyName(), albumId, artistId));
+                    //if(row[0] >= 0){
+                        Log.d(TAG, "Added Track to database: " + didlObject.getTitle());
+                        counter[0]++;
+                        Log.d(TAG, "Count: " + counter[0]);
+                   //}
+
 
                 }, throwable -> {
                     Log.d(TAG, throwable.getMessage());
@@ -214,16 +221,25 @@ public class MainViewModel extends BaseObservable {
         return info.getSSID();
     }
 
-    //todo
-    private void sendReport(long duration, int tracksScanned) {
-        long seconds = TimeUnit.MILLISECONDS.toSeconds(duration);
-        Disposable d =
-                Observable.create(e -> Answers.getInstance().logCustom(new CustomEvent("Cache Report")
-                        .putCustomAttribute("Elements per second", tracksScanned / seconds)
-                        .putCustomAttribute("Tracks scanned", tracksScanned)
-                        .putCustomAttribute("Time elapsed", seconds))).subscribeOn(Schedulers.io()).subscribe();
-        compositeDisposable.add(d);
+    private int getRSSI(){
+        WifiManager wifiManager = (WifiManager) context.getApplicationContext().getSystemService(Context.WIFI_SERVICE);
+        int numberOfLevels = 5;
+        WifiInfo wifiInfo = wifiManager.getConnectionInfo();
+        return WifiManager.calculateSignalLevel(wifiInfo.getRssi(), numberOfLevels);
+    }
 
+    private void sendReport(long duration, int tracksScanned, String serverInfo) {
+
+        Answers.getInstance().logCustom(new CustomEvent("INDEXING REPORT")
+                .putCustomAttribute("Upnp/Dlna Server", serverInfo)
+                .putCustomAttribute("Tracks scanned", String.valueOf(tracksScanned))
+                .putCustomAttribute("Time elapsed", String.valueOf(TimeUnit.MILLISECONDS.toSeconds(duration)))
+                .putCustomAttribute("Scans per second", String.valueOf(tracksScanned / TimeUnit.MILLISECONDS.toSeconds(duration)))
+                .putCustomAttribute("Device model", Build.MODEL)
+                .putCustomAttribute("Device version", String.valueOf(Build.VERSION.SDK_INT))
+                .putCustomAttribute("Wifi strength", String.valueOf(getRSSI()))
+                .putCustomAttribute("Database size (bytes):", String.valueOf(appDatabase.getOpenHelper().getReadableDatabase().getPath().length()))
+        );
     }
 
     public void onDestroy() {

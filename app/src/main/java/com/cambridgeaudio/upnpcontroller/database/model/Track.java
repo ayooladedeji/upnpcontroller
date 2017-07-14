@@ -21,26 +21,28 @@ import static android.arch.persistence.room.ForeignKey.CASCADE;
  * Created by Ayo on 01/06/2017.
  */
 
-@Entity(tableName = "tracks"//,
-//        foreignKeys = {
-//                @ForeignKey(entity = Artist.class,
-//                        parentColumns = "id",
-//                        childColumns = "artist_id",
-//                        onDelete = CASCADE,
-//                        onUpdate = CASCADE),
-//                @ForeignKey(entity = Album.class,
-//                        parentColumns = "id",
-//                        childColumns = "album_id",
-//                        onDelete = CASCADE,
-//                        onUpdate = CASCADE),
-//                @ForeignKey(entity = Server.class,
-//                        parentColumns = "name",
-//                        childColumns = "server_name",
-//                        onDelete = CASCADE,
-//                        onUpdate = CASCADE)
-//        },
-//        indices = {@Index(value = "media_path", unique = true), @Index(value = {"artist_id", "album_id", "server_name"}, unique = true)}
-)
+@Entity(tableName = "tracks",
+        foreignKeys = {
+                @ForeignKey(entity = Artist.class,
+                        parentColumns = "id",
+                        childColumns = "artist_id",
+                        onDelete = CASCADE,
+                        onUpdate = CASCADE),
+                @ForeignKey(entity = Album.class,
+                        parentColumns = "id",
+                        childColumns = "album_id",
+                        onDelete = CASCADE,
+                        onUpdate = CASCADE),
+                @ForeignKey(entity = Server.class,
+                        parentColumns = "name",
+                        childColumns = "server_name",
+                        onDelete = CASCADE,
+                        onUpdate = CASCADE)},
+        indices = {
+            @Index(value = "media_path", unique = true),
+            @Index(value = "artist_id"),
+            @Index(value = "album_id"),
+            @Index(value = "server_name")})
 public class Track {
 
     @ColumnInfo(name = "id")
@@ -91,6 +93,7 @@ public class Track {
     public static Track create(DIDLObject didlObject, String serverName, long albumId, long artistId) throws MalformedURLException {
         Track t = new Track();
 
+        t.setId(didlObject.getId());
         t.setServerName(serverName);
         t.setAlbumId(albumId);
         t.setArtistId(artistId);

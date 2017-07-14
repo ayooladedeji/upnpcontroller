@@ -167,13 +167,12 @@ public class UpnpApiImpl implements UpnpApi {
                         DIDLObject[] didlArray = new DIDLObject[didlObjects.size()];
                         didlArray = didlObjects.toArray(didlArray);
                         Flowable<DIDLObject> f = Flowable.fromArray(didlArray);
-                        return Flowable.merge(recursiveScan1(id, start, count), f);
+                        return Flowable.merge(recursiveScan1(id, start + count, count), f);
                     }
                 }, 20).retry()
                 .flatMap(didlObject -> {
                     if(didlObject instanceof Container){
                         return recursiveScan1(didlObject.getId(), start, count);
-                        //return Flowable.merge(container, Flowable.just(didlObject));
                     }else{
                         return Flowable.just(didlObject);
                     }

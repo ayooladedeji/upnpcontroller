@@ -12,6 +12,7 @@ import java.util.List;
 
 import io.reactivex.Flowable;
 
+import static android.arch.persistence.room.OnConflictStrategy.IGNORE;
 import static android.arch.persistence.room.OnConflictStrategy.REPLACE;
 
 /**
@@ -39,7 +40,7 @@ public interface AlbumDao {
     @Query("select * from albums limit :limit")
     Flowable<List<Album>> getAllWithLimit(int limit);
 
-    @Insert(onConflict = REPLACE)
+    @Insert(onConflict = IGNORE)
     long[] insert(Album... albums);
 
 }

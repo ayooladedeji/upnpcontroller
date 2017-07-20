@@ -2,9 +2,9 @@ package com.cambridgeaudio.upnpcontroller.upnp;
 
 import android.content.ComponentName;
 import android.content.ServiceConnection;
+import android.icu.text.Replaceable;
 import android.os.IBinder;
 import android.util.Log;
-import android.widget.Switch;
 
 import org.fourthline.cling.android.AndroidUpnpService;
 import org.fourthline.cling.controlpoint.ControlPoint;
@@ -30,12 +30,10 @@ import org.fourthline.cling.support.model.item.AudioItem;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Objects;
 
 import io.reactivex.BackpressureStrategy;
 import io.reactivex.Flowable;
 import io.reactivex.Observable;
-import io.reactivex.android.schedulers.AndroidSchedulers;
 import io.reactivex.schedulers.Schedulers;
 import io.reactivex.subjects.BehaviorSubject;
 import io.reactivex.subjects.ReplaySubject;
@@ -64,6 +62,7 @@ public class UpnpApiImpl implements UpnpApi {
 
     private ReplaySubject<Device> mediaServerSubject = ReplaySubject.create();
     private ReplaySubject<Device> mediaRendererSubject = ReplaySubject.create();
+    private ReplaySubject didlSubject = ReplaySubject.create();
 
     private ServiceConnection serviceConnection = null;
 
@@ -98,30 +97,7 @@ public class UpnpApiImpl implements UpnpApi {
     }
 
     @Override
-    public Flowable<DIDLObject> browse(String id) {
-        return Flowable.create(e -> controlPoint.execute(new Browse(selectedMediaServer.findService(new UDAServiceType("ContentDirectory")), id, BrowseFlag.DIRECT_CHILDREN, "*", 0, 50L, new SortCriterion(true, "dc:title")) {
-            @Override
-            public void received(ActionInvocation actionInvocation, DIDLContent didl) {
-                for (DIDLObject didlObject : didl.getContainers())
-                    e.onNext(didlObject);
-
-                for (DIDLObject didlObject : didl.getItems())
-                    e.onNext(didlObject);
-
-            }
-
-            @Override
-            public void updateStatus(Status status) {
-            }
-
-            @Override
-            public void failure(ActionInvocation invocation, UpnpResponse operation, String defaultMsg) {
-            }
-        }), BackpressureStrategy.BUFFER);
-    }
-
-    @Override
-    public Flowable<List<DIDLObject>> browse1(String id, long start, long count) {
+    public Flowable<List<DIDLObject>> browse(String id, long start, long count) {
         return Flowable.create(e -> controlPoint.execute(new Browse(selectedMediaServer.findService(new UDAServiceType("ContentDirectory")), id, BrowseFlag.DIRECT_CHILDREN, "*", start, count, new SortCriterion(true, "dc:title")) {
             @Override
             public void received(ActionInvocation actionInvocation, DIDLContent didl) {
@@ -144,20 +120,8 @@ public class UpnpApiImpl implements UpnpApi {
     }
 
     @Override
-    public Flowable<DIDLObject> recursiveScan(String id) {
-        return browse(id)
-                .flatMap(didlObject -> {
-                    if (didlObject instanceof Container) {
-                        return recursiveScan(didlObject.getId());
-                    } else {
-                        return Flowable.just(didlObject);
-                    }
-                });
-    }
-
-    @Override
-    public Flowable<DIDLObject> recursiveScan1(String id, long start, long count) {
-        return browse1(id, start, count)
+    public Flowable<DIDLObject> recursiveScan(String id, long start, long count) {
+        return browse(id, start, count)
                 .flatMap(didlObjects -> {
                     if(didlObjects.size() < count){
                         DIDLObject[] didlArray = new DIDLObject[didlObjects.size()];
@@ -167,12 +131,12 @@ public class UpnpApiImpl implements UpnpApi {
                         DIDLObject[] didlArray = new DIDLObject[didlObjects.size()];
                         didlArray = didlObjects.toArray(didlArray);
                         Flowable<DIDLObject> f = Flowable.fromArray(didlArray);
-                        return Flowable.merge(recursiveScan1(id, start + count, count), f);
+                        return Flowable.merge(recursiveScan(id, start + count, count), f);
                     }
                 }, 20).retry()
                 .flatMap(didlObject -> {
                     if(didlObject instanceof Container){
-                        return recursiveScan1(didlObject.getId(), start, count);
+                        return recursiveScan(didlObject.getId(), start, count);
                     }else{
                         return Flowable.just(didlObject);
                     }
@@ -180,17 +144,9 @@ public class UpnpApiImpl implements UpnpApi {
     }
 
     @Override
-    public Flowable<DIDLObject> scan(String id) {
+    public Flowable<DIDLObject> scan(String id, long start, long count) {
 
-        return recursiveScan(id)
-                .subscribeOn(Schedulers.io())
-                .filter(didlObject -> didlObject instanceof AudioItem);
-    }
-
-    @Override
-    public Flowable<DIDLObject> scan1(String id, long start, long count) {
-
-        return recursiveScan1(id, start, count).retry()
+        return recursiveScan(id, start, count).retry()
                 .subscribeOn(Schedulers.io())
                 .filter(didlObject -> didlObject instanceof AudioItem);
     }

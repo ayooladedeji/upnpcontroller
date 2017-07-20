@@ -18,7 +18,7 @@ import com.cambridgeaudio.upnpcontroller.database.model.Track;
  * Created by Ayo on 02/06/2017.
  */
 
-@Database(entities = {Track.class, Server.class, Album.class, Artist.class}, version = 63, exportSchema = false)
+@Database(entities = {Track.class, Server.class, Album.class, Artist.class}, version = 66, exportSchema = false)
 public abstract class AppDatabase extends RoomDatabase {
 
     private static AppDatabase INSTANCE;

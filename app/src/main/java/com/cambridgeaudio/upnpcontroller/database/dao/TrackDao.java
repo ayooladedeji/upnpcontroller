@@ -26,7 +26,6 @@ public interface TrackDao {
     @Query("select * from tracks limit :limit")
     Flowable<List<Track>> getAllWithLimit(int limit);
 
-    //todo add percentage signs
     @Query("select * from tracks where track_title  like :trackTitle")
     Flowable<List<Track>> getAllByTitle(String trackTitle);
 

@@ -78,6 +78,7 @@ public class BrowseActivity extends AppCompatActivity
         browseViewModel.getInitialList();
         setUpNavMenu();
         setUpDrawerLayout();
+        setTitle("Browse");
     }
     private void setUpNavMenu(){
         Menu menu = binding.navViewBrowse.getMenu();

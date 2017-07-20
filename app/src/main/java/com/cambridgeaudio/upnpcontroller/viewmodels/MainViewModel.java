@@ -22,9 +22,12 @@ import com.crashlytics.android.answers.Answers;
 import com.crashlytics.android.answers.CustomEvent;
 
 import org.fourthline.cling.model.meta.Device;
+import org.fourthline.cling.support.model.DIDLObject;
 import org.fourthline.cling.support.model.item.MusicTrack;
 
 import java.util.ArrayList;
+import java.util.List;
+import java.util.Locale;
 import java.util.concurrent.TimeUnit;
 
 import io.reactivex.BackpressureStrategy;
@@ -32,10 +35,7 @@ import io.reactivex.Flowable;
 import io.reactivex.Observable;
 import io.reactivex.android.schedulers.AndroidSchedulers;
 import io.reactivex.disposables.CompositeDisposable;
-import io.reactivex.disposables.Disposable;
 import io.reactivex.schedulers.Schedulers;
-
-import static java.lang.Math.toIntExact;
 
 /**
  * Created by Ayo on 12/06/2017.
@@ -61,13 +61,8 @@ public class MainViewModel extends BaseObservable {
     }
 
     public Observable<Device> getMediaServers() {
-        //viewController.showProgressDialog(null, "Finding servers....");
         return upnpApi
                 .getMediaServers();
-    }
-
-    public Observable<ArrayList<Device>> getMediaServersAsList() {
-        return upnpApi.getMediaServersAsList();
     }
 
     public ServiceConnection getServiceConnection() {
@@ -76,41 +71,39 @@ public class MainViewModel extends BaseObservable {
 
 
     public void selectMediaServer(String name) {
-
-//        upnpApi.getMediaServers()
-//                .distinct()
-//                .filter(d -> name.equals(d.getDetails().getFriendlyName()))
-//                .subscribe(device -> {
-//                    Log.d("SERVER", "CLICKED");
-//                    upnpApi.selectMediaServer(device);
-//                    browse("0");
-//                });
         upnpApi.getMediaServersAsList()
                 .observeOn(AndroidSchedulers.mainThread())
-                //.subscribeOn(Schedulers.io())
                 .subscribe(devices -> {
                     Log.d("SERVER", "CLICKED");
                     for (Device d : devices) {
                         if (name.equals(d.getDetails().getFriendlyName()))
                             upnpApi.selectMediaServer(d);
                     }
-                    //devices.stream().filter(d -> name.equals(d.getDetails().getFriendlyName())).forEach(d -> upnpApi.selectMediaServer(d));
                     browse("0");
                 });
 
     }
 
     public void browse(String id) {
-        //viewController.showProgressDialog(null, "loading directory...");
-        objectIdList.add(id);
         this.didlList.clear();
-        upnpApi.browse(id)
-                .timeout(2, TimeUnit.SECONDS, Flowable.create(e -> {
-                    //viewController.dismissProgressDialog();
-                }, BackpressureStrategy.BUFFER))
-                //.subscribeOn(Schedulers.io())
-                .observeOn(AndroidSchedulers.mainThread())
-                .subscribe(didlObject -> didlList.add(new DidlViewModel(didlObject)));
+
+        objectIdList.add(id);
+
+        for(DIDLObject didlObject : browse1(id))
+            didlList.add(new DidlViewModel(didlObject));
+
+//        upnpApi.browse(id, 0L, 50L)
+//                .observeOn(AndroidSchedulers.mainThread())
+//
+//                .subscribe(didlObjects -> {
+//                    for (DIDLObject didlObject : didlObjects)
+//                        didlList.add(new DidlViewModel(didlObject));
+//                });
+    }
+
+    public List<DIDLObject> browse1(String id){
+        return upnpApi.browse(id, 0L, 50L)
+                .blockingFirst();
     }
 
     public void goBack() {
@@ -122,21 +115,6 @@ public class MainViewModel extends BaseObservable {
 
     public boolean isAtRoot() {
         return objectIdList.size() == 1;
-    }
-
-    private void addServer() {
-        Disposable d =
-                Observable.create(e -> {
-                    Server server = new Server();
-                    String serverName = upnpApi.getSelectedMediaServer().getDetails().getFriendlyName();
-                    String serverAddress = upnpApi.getSelectedMediaServer().getDetails().getBaseURL().toString();
-                    server.setName(serverName);
-                    server.setAddress(serverAddress);
-                    server.setWifi(getSSID());
-                    appDatabase.serverDao().insert(server);
-                    Log.d(TAG, "added Server: " + server.getName());
-                }).subscribeOn(Schedulers.io()).subscribe();
-        compositeDisposable.add(d);
     }
 
     private String getBaseURL(String s) {
@@ -151,13 +129,14 @@ public class MainViewModel extends BaseObservable {
         Log.d(TAG, "Cache started");
         final int[] counter = {0};
         final boolean[] isFirst = {true};
-        upnpApi.scan1(directoryId, 0, 1000)
+        upnpApi.scan(directoryId, 0, 1000)
                 .retry()
-                .timeout(4, TimeUnit.SECONDS, Flowable.create(e -> {
+                .timeout(10, TimeUnit.SECONDS, Flowable.create(e -> {
                     Log.d(TAG, "Cache complete");
-                    sendReport(System.currentTimeMillis() - currentTime, counter[0], upnpApi.getSelectedMediaServer().getDetails().getFriendlyName() +", " +upnpApi.getSelectedMediaServer().getDetails().getModelDetails().toString());
+                    sendReport(System.currentTimeMillis() - currentTime, counter[0], upnpApi.getSelectedMediaServer().getDetails().getFriendlyName() + ", " + upnpApi.getSelectedMediaServer().getDetails().getModelDetails().toString());
                     viewController.dismissProgressDialog();
-                    viewController.showDialog("Complete", "your chosen directory has now been indexed, you can view these files in the browse activity ", true);
+                    String dialogMessage = String.format(Locale.getDefault(),"your chosen directory has now been indexed, you can view these files in the browse activity \n Tracks scanned: %d \n Time elapsed (s) : %d", counter[0], TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis() - currentTime));
+                    viewController.showDialog("Complete", dialogMessage, true);
 
                 }, BackpressureStrategy.BUFFER))
 
@@ -197,12 +176,10 @@ public class MainViewModel extends BaseObservable {
                         }
                     }
 
-                    long [] row = appDatabase.trackDao().insert(Track.create(didlObject, upnpApi.getSelectedMediaServer().getDetails().getFriendlyName(), albumId, artistId));
-                    //if(row[0] >= 0){
-                        Log.d(TAG, "Added Track to database: " + didlObject.getTitle());
-                        counter[0]++;
-                        Log.d(TAG, "Count: " + counter[0]);
-                   //}
+                    appDatabase.trackDao().insert(Track.create(didlObject, upnpApi.getSelectedMediaServer().getDetails().getFriendlyName(), albumId, artistId));
+                    Log.d(TAG, "Added Track to database: " + didlObject.getTitle());
+                    counter[0]++;
+                    Log.d(TAG, "Count: " + counter[0]);
 
 
                 }, throwable -> {
@@ -213,15 +190,13 @@ public class MainViewModel extends BaseObservable {
                 });
     }
 
-
-    //todo handle cases where wifi is not connected?
     private String getSSID() {
         WifiManager wifiManager = (WifiManager) context.getApplicationContext().getSystemService(Context.WIFI_SERVICE);
         WifiInfo info = wifiManager.getConnectionInfo();
         return info.getSSID();
     }
 
-    private int getRSSI(){
+    private int getRSSI() {
         WifiManager wifiManager = (WifiManager) context.getApplicationContext().getSystemService(Context.WIFI_SERVICE);
         int numberOfLevels = 5;
         WifiInfo wifiInfo = wifiManager.getConnectionInfo();

@@ -142,7 +142,9 @@ public class MainActivity extends AppCompatActivity
                 }, 250);
                 break;
             default:
-                mainViewModel.selectMediaServer(item.getTitle().toString());
+                String server = item.getTitle().toString();
+                mainViewModel.selectMediaServer(server);
+                setTitle(server);
                 break;
         }
         binding.drawerLayout.closeDrawer(GravityCompat.START);

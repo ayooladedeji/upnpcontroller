@@ -31,9 +31,12 @@ import org.fourthline.cling.support.model.item.AudioItem;
 import java.util.ArrayList;
 import java.util.List;
 
+import javax.inject.Inject;
+
 import io.reactivex.BackpressureStrategy;
 import io.reactivex.Flowable;
 import io.reactivex.Observable;
+import io.reactivex.android.schedulers.AndroidSchedulers;
 import io.reactivex.schedulers.Schedulers;
 import io.reactivex.subjects.BehaviorSubject;
 import io.reactivex.subjects.ReplaySubject;
@@ -66,6 +69,10 @@ public class UpnpApiImpl implements UpnpApi {
 
     private ServiceConnection serviceConnection = null;
 
+    @Inject
+    public UpnpApiImpl() {
+    }
+
     @Override
     public ServiceConnection getServiceConnection() {
         if (serviceConnection == null) {
@@ -97,16 +104,17 @@ public class UpnpApiImpl implements UpnpApi {
     }
 
     @Override
-    public Flowable<List<DIDLObject>> browse(String id, long start, long count) {
+    public Flowable<ArrayList<DIDLObject>> browse(String id, long start, long count) {
         return Flowable.create(e -> controlPoint.execute(new Browse(selectedMediaServer.findService(new UDAServiceType("ContentDirectory")), id, BrowseFlag.DIRECT_CHILDREN, "*", start, count, new SortCriterion(true, "dc:title")) {
             @Override
             public void received(ActionInvocation actionInvocation, DIDLContent didl) {
-                List<DIDLObject> items = new ArrayList<>();
+                ArrayList<DIDLObject> items = new ArrayList<>();
 
                 items.addAll(didl.getContainers());
                 items.addAll(didl.getItems());
 
                 e.onNext(items);
+                e.onComplete();
             }
 
             @Override
@@ -115,6 +123,7 @@ public class UpnpApiImpl implements UpnpApi {
 
             @Override
             public void failure(ActionInvocation invocation, UpnpResponse operation, String defaultMsg) {
+                e.onError(new UpnpException(defaultMsg));
             }
         }), BackpressureStrategy.BUFFER);
     }
@@ -122,33 +131,31 @@ public class UpnpApiImpl implements UpnpApi {
     @Override
     public Flowable<DIDLObject> recursiveScan(String id, long start, long count) {
         return browse(id, start, count)
+                .retry()
                 .flatMap(didlObjects -> {
-                    if(didlObjects.size() < count){
-                        DIDLObject[] didlArray = new DIDLObject[didlObjects.size()];
-                        didlArray = didlObjects.toArray(didlArray);
-                        return Flowable.fromArray(didlArray);
+                    if (didlObjects.size() < count) {
+                        return Flowable.fromIterable(didlObjects);
                     } else {
-                        DIDLObject[] didlArray = new DIDLObject[didlObjects.size()];
-                        didlArray = didlObjects.toArray(didlArray);
-                        Flowable<DIDLObject> f = Flowable.fromArray(didlArray);
-                        return Flowable.merge(recursiveScan(id, start + count, count), f);
+                        return Flowable.merge(recursiveScan(id, start + count, count), Flowable.fromIterable(didlObjects));
                     }
-                }, 20).retry()
+                }, 3)
+                .observeOn(Schedulers.single())
+                .filter(didlObject -> (didlObject instanceof AudioItem || didlObject instanceof Container))
+                .retry()
                 .flatMap(didlObject -> {
-                    if(didlObject instanceof Container){
+                    if (didlObject instanceof Container) {
                         return recursiveScan(didlObject.getId(), start, count);
-                    }else{
+                    } else {
                         return Flowable.just(didlObject);
                     }
-                }).retry();
+                },3)
+                .observeOn(Schedulers.single())
+                .retry();
     }
 
     @Override
     public Flowable<DIDLObject> scan(String id, long start, long count) {
-
-        return recursiveScan(id, start, count).retry()
-                .subscribeOn(Schedulers.io())
-                .filter(didlObject -> didlObject instanceof AudioItem);
+        return recursiveScan(id, start, count).retry();
     }
 
     @Override

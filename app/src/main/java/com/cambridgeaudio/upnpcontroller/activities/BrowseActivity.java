@@ -32,12 +32,16 @@ import com.cambridgeaudio.upnpcontroller.recyclerbinding.adapter.binder.ItemBind
 import com.cambridgeaudio.upnpcontroller.recyclerbinding.binder.AlbumObjectBinder;
 import com.cambridgeaudio.upnpcontroller.recyclerbinding.binder.ArtistObjectBinder;
 import com.cambridgeaudio.upnpcontroller.recyclerbinding.binder.TrackObjectBinder;
+import com.cambridgeaudio.upnpcontroller.upnp.UpnpApiImpl;
 import com.cambridgeaudio.upnpcontroller.viewmodels.BrowseViewModel;
 import com.cambridgeaudio.upnpcontroller.viewmodels.itemviews.AlbumViewModel;
 import com.cambridgeaudio.upnpcontroller.viewmodels.itemviews.ArtistViewModel;
 import com.cambridgeaudio.upnpcontroller.viewmodels.itemviews.TrackViewModel;
 import com.crashlytics.android.Crashlytics;
 
+import javax.inject.Inject;
+
+import dagger.android.AndroidInjection;
 import io.fabric.sdk.android.Fabric;
 import io.reactivex.android.schedulers.AndroidSchedulers;
 import io.reactivex.schedulers.Schedulers;
@@ -53,16 +57,19 @@ public class BrowseActivity extends AppCompatActivity
     private BrowseViewModel browseViewModel;
     private ActivityBrowseBinding binding;
 
+    @Inject
+    UpnpApiImpl upnpApi;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        AndroidInjection.inject(this);
         super.onCreate(savedInstanceState);
         Fabric.with(this, new Crashlytics());
 
         browseViewModel =
                 new BrowseViewModel(
                         this,
-                        ((MyApplication) this.getApplication()).getUpnpApi(),
+                        upnpApi,
                         ((MyApplication) this.getApplication()).getAppDatabase(),
                         this);
 
@@ -152,7 +159,7 @@ public class BrowseActivity extends AppCompatActivity
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         int id = item.getItemId();
-        return id == R.id.action_settings || super.onOptionsItemSelected(item);
+        return id == R.id.action_wipe || super.onOptionsItemSelected(item);
 
     }
 
@@ -208,7 +215,7 @@ public class BrowseActivity extends AppCompatActivity
 
     @Override
     public void showDialog(String title, String message, boolean cancelable) {
-        this.runOnUiThread(() -> SimpleDialog.show(this, title, message, false));
+        this.runOnUiThread(() -> SimpleDialog.show(this, title, message, false, null));
     }
 
     @Override

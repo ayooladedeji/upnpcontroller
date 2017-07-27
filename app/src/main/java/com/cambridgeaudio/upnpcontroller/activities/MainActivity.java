@@ -1,6 +1,7 @@
 package com.cambridgeaudio.upnpcontroller.activities;
 
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.databinding.DataBindingUtil;
 import android.os.Handler;
@@ -24,6 +25,7 @@ import com.cambridgeaudio.upnpcontroller.databinding.ActivityMainBinding;
 import com.cambridgeaudio.upnpcontroller.dialogs.LoadingDialog;
 import com.cambridgeaudio.upnpcontroller.dialogs.SimpleDialog;
 import com.cambridgeaudio.upnpcontroller.recyclerbinding.WrapContentLinearLayoutManager;
+import com.cambridgeaudio.upnpcontroller.upnp.UpnpApiImpl;
 import com.cambridgeaudio.upnpcontroller.viewmodels.MainViewModel;
 import com.cambridgeaudio.upnpcontroller.viewmodels.itemviews.DidlViewModel;
 import com.cambridgeaudio.upnpcontroller.recyclerbinding.adapter.ClickHandler;
@@ -33,11 +35,14 @@ import com.cambridgeaudio.upnpcontroller.recyclerbinding.binder.DidlObjectBinder
 
 import com.crashlytics.android.Crashlytics;
 
+import dagger.android.AndroidInjection;
 import io.fabric.sdk.android.Fabric;
 import io.reactivex.android.schedulers.AndroidSchedulers;
 import io.reactivex.schedulers.Schedulers;
 
 import org.fourthline.cling.android.AndroidUpnpServiceImpl;
+
+import javax.inject.Inject;
 
 public class MainActivity extends AppCompatActivity
         implements NavigationView.OnNavigationItemSelectedListener, MainViewModel.ViewController {
@@ -45,16 +50,20 @@ public class MainActivity extends AppCompatActivity
     private MainViewModel mainViewModel;
     private ActivityMainBinding binding;
 
+    @Inject
+    UpnpApiImpl upnpApi;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        AndroidInjection.inject(this);
         super.onCreate(savedInstanceState);
         Fabric.with(this, new Crashlytics());
 
         mainViewModel =
                 new MainViewModel(
                         this,
-                        ((MyApplication) this.getApplication()).getUpnpApi(),
+                        upnpApi,
                         ((MyApplication) this.getApplication()).getAppDatabase(),
                         this);
 
@@ -75,13 +84,14 @@ public class MainActivity extends AppCompatActivity
 
     }
 
-    private void setUpNavMenu(){
+    private void setUpNavMenu() {
         Menu menu = binding.navView.getMenu();
-        menu.add("Browse");
+        //todo menu.add("Browse");
         SubMenu subMenu = menu.addSubMenu(0, 1, Menu.NONE, "Media Servers");
         populateMediaServers(subMenu);
 
     }
+
     private void populateMediaServers(SubMenu subMenu) {
         mainViewModel.getMediaServers()
                 .subscribeOn(Schedulers.io())
@@ -121,7 +131,8 @@ public class MainActivity extends AppCompatActivity
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         int id = item.getItemId();
-        if (id == R.id.action_settings) {
+        if (id == R.id.action_wipe) {
+            mainViewModel.wipe();
             return true;
         }
 
@@ -133,7 +144,7 @@ public class MainActivity extends AppCompatActivity
         Log.d("CLICKED", "onNavigationItemSelected");
 
         String itemClicked = item.getTitle().toString();
-        switch(itemClicked) {
+        switch (itemClicked) {
             case "Browse":
                 new Handler().postDelayed(() -> {
                     Intent intent = new Intent(MainActivity.this, BrowseActivity.class);
@@ -184,9 +195,11 @@ public class MainActivity extends AppCompatActivity
     }
 
     @Override
-    public void showDialog(String title, String message, boolean cancelable) {
-        this.runOnUiThread(() -> SimpleDialog.show(this, title, message, cancelable));
+    public void showDialog(String title, String message, boolean cancelable, DialogInterface.OnClickListener listener) {
+        this.runOnUiThread(() -> SimpleDialog.show(this, title, message, cancelable, listener));
     }
+
+
 
     @Override
     protected void onDestroy() {

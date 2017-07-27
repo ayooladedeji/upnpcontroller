@@ -20,7 +20,7 @@ public interface UpnpApi {
 
     ServiceConnection getServiceConnection();
 
-    Flowable<List<DIDLObject>> browse(String id, long start, long count);
+    Flowable<ArrayList<DIDLObject>> browse(String id, long start, long count);
 
     Flowable<DIDLObject> recursiveScan(String id, long start, long count);
 

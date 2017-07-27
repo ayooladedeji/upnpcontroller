@@ -11,12 +11,14 @@ import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.DialogInterface;
 
+import static android.content.DialogInterface.BUTTON_POSITIVE;
+
 
 public class SimpleDialog {
 
     private static AlertDialog dialog;
 
-    public static void show(Context context, String title, String message, boolean cancelable) {
+    public static void show(Context context, String title, String message, boolean cancelable, DialogInterface.OnClickListener listener) {
         AlertDialog.Builder builder = new AlertDialog.Builder(context);
 
         if(message != null)
@@ -27,9 +29,7 @@ public class SimpleDialog {
 
         builder.setCancelable(cancelable);
 
-        builder.setPositiveButton(
-                "OK",
-                (dialog, id) -> dialog.cancel());
+        builder.setPositiveButton("OK", listener != null ? listener : (dialog, id) -> dialog.cancel());
 
         dialog = builder.create();
         dialog.show();
@@ -39,6 +39,10 @@ public class SimpleDialog {
         if (dialog != null)
             dialog.dismiss();
     }
+
+
+
+
 
 
 }

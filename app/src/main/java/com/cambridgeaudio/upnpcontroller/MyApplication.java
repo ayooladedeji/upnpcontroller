@@ -1,5 +1,6 @@
 package com.cambridgeaudio.upnpcontroller;
 
+import android.app.Activity;
 import android.app.Application;
 import android.support.multidex.MultiDexApplication;
 
@@ -7,28 +8,27 @@ import com.cambridgeaudio.upnpcontroller.database.AppDatabase;
 import com.cambridgeaudio.upnpcontroller.upnp.UpnpApi;
 import com.cambridgeaudio.upnpcontroller.upnp.UpnpApiImpl;
 
+import javax.inject.Inject;
+
+import dagger.android.AndroidInjector;
+import dagger.android.DispatchingAndroidInjector;
+import dagger.android.HasActivityInjector;
+
 /**
  * Created by Ayo on 28/06/2017.
  */
 
-public class MyApplication extends MultiDexApplication {
+public class MyApplication extends MultiDexApplication implements HasActivityInjector {
 
-    private UpnpApi upnpApi = null;
+    @Inject
+    DispatchingAndroidInjector<Activity> dispatchingAndroidInjector;
+
     private AppDatabase appDatabase = null;
 
     @Override
     public void onCreate() {
         super.onCreate();
-
-    }
-
-    public UpnpApi getUpnpApi(){
-        if(upnpApi == null){
-            upnpApi = new UpnpApiImpl();
-            return upnpApi;
-        }
-        else
-            return upnpApi;
+        DaggerMyApplicationComponent.create().inject(this);
     }
 
     public  AppDatabase getAppDatabase(){
@@ -38,5 +38,10 @@ public class MyApplication extends MultiDexApplication {
         }else{
             return appDatabase;
         }
+    }
+
+    @Override
+    public AndroidInjector<Activity> activityInjector() {
+        return dispatchingAndroidInjector;
     }
 }

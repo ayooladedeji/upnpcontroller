@@ -1,6 +1,8 @@
 package com.cambridgeaudio.upnpcontroller.viewmodels;
 
 import android.content.Context;
+import android.content.DialogInterface;
+import android.content.Intent;
 import android.content.ServiceConnection;
 import android.databinding.BaseObservable;
 import android.databinding.Bindable;
@@ -35,6 +37,8 @@ import io.reactivex.Flowable;
 import io.reactivex.Observable;
 import io.reactivex.android.schedulers.AndroidSchedulers;
 import io.reactivex.disposables.CompositeDisposable;
+import io.reactivex.disposables.Disposable;
+import io.reactivex.functions.Action;
 import io.reactivex.schedulers.Schedulers;
 
 /**
@@ -89,20 +93,12 @@ public class MainViewModel extends BaseObservable {
 
         objectIdList.add(id);
 
-        for(DIDLObject didlObject : browse1(id))
+        for (DIDLObject didlObject : browse1(id))
             didlList.add(new DidlViewModel(didlObject));
-
-//        upnpApi.browse(id, 0L, 50L)
-//                .observeOn(AndroidSchedulers.mainThread())
-//
-//                .subscribe(didlObjects -> {
-//                    for (DIDLObject didlObject : didlObjects)
-//                        didlList.add(new DidlViewModel(didlObject));
-//                });
     }
 
-    public List<DIDLObject> browse1(String id){
-        return upnpApi.browse(id, 0L, 50L)
+    public List<DIDLObject> browse1(String id) {
+        return upnpApi.browse(id, 0L, 50L).retry()
                 .blockingFirst();
     }
 
@@ -122,6 +118,9 @@ public class MainViewModel extends BaseObservable {
         return parts[0] + "//" + parts[2] + "/";
     }
 
+    public void wipe(){
+    }
+
     public void cacheCurrentDirectory() {
         long currentTime = System.currentTimeMillis();
         String directoryId = objectIdList.get(objectIdList.size() - 1);
@@ -131,63 +130,65 @@ public class MainViewModel extends BaseObservable {
         final boolean[] isFirst = {true};
         upnpApi.scan(directoryId, 0, 1000)
                 .retry()
-                .timeout(10, TimeUnit.SECONDS, Flowable.create(e -> {
-                    Log.d(TAG, "Cache complete");
-                    sendReport(System.currentTimeMillis() - currentTime, counter[0], upnpApi.getSelectedMediaServer().getDetails().getFriendlyName() + ", " + upnpApi.getSelectedMediaServer().getDetails().getModelDetails().toString());
-                    viewController.dismissProgressDialog();
-                    String dialogMessage = String.format(Locale.getDefault(),"your chosen directory has now been indexed, you can view these files in the browse activity \n Tracks scanned: %d \n Time elapsed (s) : %d", counter[0], TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis() - currentTime));
-                    viewController.showDialog("Complete", dialogMessage, true);
-
-                }, BackpressureStrategy.BUFFER))
-
                 .subscribe(didlObject -> {
 
-                    viewController.setDialogMessage(didlObject.getTitle());
-                    if (isFirst[0]) {
-                        Server server = new Server();
-                        String serverName = upnpApi.getSelectedMediaServer().getDetails().getFriendlyName();
-                        String serverAddress = getBaseURL(didlObject.getFirstResource().getValue());
-                        server.setName(serverName);
-                        server.setAddress(serverAddress);
-                        server.setWifi(getSSID());
-                        appDatabase.serverDao().insert(server);
-                        Log.d(TAG, "added Server: " + server.getName());
-                        isFirst[0] = false;
-                    }
+                            viewController.setDialogMessage(didlObject.getTitle());
+                            if (isFirst[0]) {
+                                Server server = new Server();
+                                String serverName = upnpApi.getSelectedMediaServer().getDetails().getFriendlyName();
+                                String serverAddress = getBaseURL(didlObject.getFirstResource().getValue());
+                                server.setName(serverName);
+                                server.setAddress(serverAddress);
+                                server.setWifi(getSSID());
+                                appDatabase.serverDao().insert(server);
+                                Log.d(TAG, "added Server: " + server.getName());
+                                isFirst[0] = false;
+                                server = null;
+                            }
 
-                    Log.d(TAG, "didlObject isntance of" + (didlObject instanceof MusicTrack ? "MusicTrack" : "AudioItem"));
+                            Log.d(TAG, "didlObject isntance of" + (didlObject instanceof MusicTrack ? "MusicTrack" : "AudioItem"));
 
-                    long albumId, artistId;
-                    albumId = artistId = -1L;
+                            long albumId, artistId;
+                            albumId = artistId = -1L;
 
-                    if (didlObject instanceof MusicTrack) {
-                        String artistName = "unknown";
+                            if (didlObject instanceof MusicTrack) {
+                                String artistName = "unknown";
 
-                        if (((MusicTrack) didlObject).getFirstArtist() != null)
-                            if (((MusicTrack) didlObject).getFirstArtist().getName() != null)
-                                artistName = ((MusicTrack) didlObject).getFirstArtist().getName();
+                                if (((MusicTrack) didlObject).getFirstArtist() != null)
+                                    if (((MusicTrack) didlObject).getFirstArtist().getName() != null)
+                                        artistName = ((MusicTrack) didlObject).getFirstArtist().getName();
 
-                        artistId = appDatabase.artistDao().insert(new Artist(artistName))[0];
-                        Log.d(TAG, "Added Artist to database: " + artistName);
+                                artistId = appDatabase.artistDao().insert(new Artist(artistName))[0];
+                                Log.d(TAG, "Added Artist to database: " + artistName);
 
-                        if (((MusicTrack) didlObject).getAlbum() != null) {
-                            albumId = appDatabase.albumDao().insert(new Album(((MusicTrack) didlObject).getAlbum(), artistId))[0];
-                            Log.d(TAG, "Added Album to database: " + ((MusicTrack) didlObject).getAlbum());
+                                if (((MusicTrack) didlObject).getAlbum() != null) {
+                                    albumId = appDatabase.albumDao().insert(new Album(((MusicTrack) didlObject).getAlbum(), artistId))[0];
+                                    Log.d(TAG, "Added Album to database: " + ((MusicTrack) didlObject).getAlbum());
+                                }
+                            }
+
+                            appDatabase.trackDao().insert(Track.create(didlObject, upnpApi.getSelectedMediaServer().getDetails().getFriendlyName(), albumId, artistId));
+                            Log.d(TAG, "Added Track to database: " + didlObject.getTitle());
+                            counter[0]++;
+                            Log.d(TAG, "Count: " + counter[0]);
+
+
+                        }, throwable -> {
+                            Log.d(TAG, throwable.getMessage());
+                            Crashlytics.logException(throwable);
+                            viewController.dismissProgressDialog();
+                            viewController.showDialog("Error", "Failed to cache your directory", true, null);
                         }
-                    }
+                        , () -> {
+                            Log.d(TAG, "Cache complete");
+                            viewController.dismissProgressDialog();
+                            String dialogMessage = "Indexing is now complete, after clicking okay an email client will appear please click send so that we can analyse the results of the scan";
+                            viewController.showDialog("Complete", dialogMessage, true,
+                                    sendEmailClickListener(generateReport(
+                                            System.currentTimeMillis() - currentTime, counter[0],
+                                            upnpApi.getSelectedMediaServer().getDetails().getFriendlyName() + ", " + upnpApi.getSelectedMediaServer().getDetails().getModelDetails().getModelName())));
 
-                    appDatabase.trackDao().insert(Track.create(didlObject, upnpApi.getSelectedMediaServer().getDetails().getFriendlyName(), albumId, artistId));
-                    Log.d(TAG, "Added Track to database: " + didlObject.getTitle());
-                    counter[0]++;
-                    Log.d(TAG, "Count: " + counter[0]);
-
-
-                }, throwable -> {
-                    Log.d(TAG, throwable.getMessage());
-                    Crashlytics.logException(throwable);
-                    viewController.dismissProgressDialog();
-                    viewController.showDialog("Error", "Failed to cache your directory", true);
-                });
+                        });
     }
 
     private String getSSID() {
@@ -203,18 +204,34 @@ public class MainViewModel extends BaseObservable {
         return WifiManager.calculateSignalLevel(wifiInfo.getRssi(), numberOfLevels);
     }
 
-    private void sendReport(long duration, int tracksScanned, String serverInfo) {
+    private String generateReport(long duration, int tracksScanned, String serverInfo) {
 
-        Answers.getInstance().logCustom(new CustomEvent("INDEXING REPORT")
-                .putCustomAttribute("Upnp/Dlna Server", serverInfo)
-                .putCustomAttribute("Tracks scanned", String.valueOf(tracksScanned))
-                .putCustomAttribute("Time elapsed", String.valueOf(TimeUnit.MILLISECONDS.toSeconds(duration)))
-                .putCustomAttribute("Scans per second", String.valueOf(tracksScanned / TimeUnit.MILLISECONDS.toSeconds(duration)))
-                .putCustomAttribute("Device model", Build.MODEL)
-                .putCustomAttribute("Device version", String.valueOf(Build.VERSION.SDK_INT))
-                .putCustomAttribute("Wifi strength", String.valueOf(getRSSI()))
-                .putCustomAttribute("Database size (bytes):", String.valueOf(appDatabase.getOpenHelper().getReadableDatabase().getPath().length()))
-        );
+        return String.format(Locale.getDefault(),
+                "Upnp/Dlna Server : %s \n" +
+                        "Tracks scanned : %d \n" +
+                        "Time elapsed : %d \n" +
+                        "Scans per second : %d \n" +
+                        "Device model : %s \n" +
+                        "Device version : %d \n" +
+                        "Wifi strength : %d \n" +
+                        "Database size (bytes) : %d \n",
+                serverInfo, tracksScanned, TimeUnit.MILLISECONDS.toSeconds(duration), tracksScanned == 0 ? 0 : tracksScanned / TimeUnit.MILLISECONDS.toSeconds(duration),
+                Build.MODEL, Build.VERSION.SDK_INT, getRSSI(), appDatabase.getOpenHelper().getReadableDatabase().getPath().length());
+
+    }
+
+
+    private DialogInterface.OnClickListener sendEmailClickListener(String report) {
+        return (dialogInterface, i) -> {
+            dialogInterface.cancel();
+            Intent Email = new Intent(Intent.ACTION_SEND);
+            Email.setType("text/email");
+            Email.putExtra(Intent.EXTRA_EMAIL, new String[]{"ayo.adedeji@cambridgeaudio.com"});
+            Email.putExtra(Intent.EXTRA_SUBJECT, "BetaTesting");
+            Email.putExtra(Intent.EXTRA_TEXT, report);
+            context.startActivity(Intent.createChooser(Email, "Send Feedback:"));
+
+        };
     }
 
     public void onDestroy() {
@@ -228,6 +245,7 @@ public class MainViewModel extends BaseObservable {
 
         void dismissProgressDialog();
 
-        void showDialog(String title, String message, boolean cancelable);
+        void showDialog(String title, String message, boolean cancelable, DialogInterface.OnClickListener listener);
+
     }
 }

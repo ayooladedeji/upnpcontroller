@@ -14,11 +14,13 @@ import com.cambridgeaudio.upnpcontroller.database.model.Artist;
 import com.cambridgeaudio.upnpcontroller.database.model.Server;
 import com.cambridgeaudio.upnpcontroller.database.model.Track;
 
+import javax.inject.Inject;
+
 /**
  * Created by Ayo on 02/06/2017.
  */
 
-@Database(entities = {Track.class, Server.class, Album.class, Artist.class}, version = 66, exportSchema = false)
+@Database(entities = {Track.class, Server.class, Album.class, Artist.class}, version = 95, exportSchema = false)
 public abstract class AppDatabase extends RoomDatabase {
 
     private static AppDatabase INSTANCE;
@@ -28,13 +30,13 @@ public abstract class AppDatabase extends RoomDatabase {
     public abstract ArtistDao artistDao();
     public abstract AlbumDao albumDao();
 
+
+    public AppDatabase(){}
+
     public static AppDatabase getAppDatabase(Context context) {
         if (INSTANCE == null) {
             INSTANCE =
                     Room.databaseBuilder(context.getApplicationContext(), AppDatabase.class, "user-database")
-                            // allow queries on the main thread.
-                            // Don't do this on a real app! See PersistenceBasicSample for an example.
-                            //.allowMainThreadQueries()
                             .build();
         }
         return INSTANCE;
